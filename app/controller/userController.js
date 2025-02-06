@@ -282,6 +282,7 @@ class User{
                 }
             })
             const sendupdate=await sendEmail.SendUpdatePasswordMessage(req,res,user)
+            res.clearCookie("userToken")
             return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
         }else{
             res.redirect('https://ecomwebskitters.onrender.com/usersignup')

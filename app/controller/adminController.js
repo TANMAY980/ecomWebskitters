@@ -656,6 +656,7 @@ class Admin{
                         password:newpassword
                     }
                 })
+                res.clearCookie("adminToken")
                 return res.redirect('/admin/adminsignin')
             }else{
                 res.redirect('/register')
