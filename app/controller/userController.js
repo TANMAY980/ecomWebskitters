@@ -256,7 +256,7 @@ class User{
 
     async UpdatePassword(req,res){
     try {
-        res.render('user/updatepassword',{
+        res.render('user/updatePassword',{
             data:req.user
         })
     } catch (error) {
