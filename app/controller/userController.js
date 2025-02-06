@@ -60,9 +60,8 @@ class User{
         }
     }
 
-
-
 /************* HOME EJS PAGE RENDERING***************/
+
     async Home(req,res){
         try {
             const allcategory = await categorymodel.find();
@@ -112,7 +111,7 @@ class User{
         }
     }
 /**************** VERIFY EMAIL FUNCTION **********************************/
-    async Verify_Email(req,res){
+    async VerifyMail(req,res){
         try {
             const{email,otp}=req.body
             if(!(email && otp)){
@@ -262,13 +261,14 @@ class User{
             return res.redirect('https://ecomwebskitters.onrender.com/usersignup');
           }
           if(!existuser.is_verified){
-            const sendotpEmail= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
-            const sendotpMessage=await sendmessage.SendMessage(req,res,existuser)
-            if(sendotpEmail && sendotpMessage){
+            const otp= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
+            const sendotpMessage = await sendmessage.SendMessage(req, res, existuser, otp);
+            if(otp && sendotpMessage){
                 return res.redirect('https://ecomwebskitters.onrender.com/verifyemail')
-            }  
+            }
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignup');
           }
-         
+          
         if(existuser && existuser.role=="user" && (await bcrypt.compare(password,existuser.password))){
             const token=jwt.sign({
                 _id:existuser._id,
@@ -310,7 +310,7 @@ class User{
 
 
 //*********************** UPDATE PASSWORD FUNCTION**************************** */
-    async Update_Password(req,res){
+    async UpdatePasskey(req,res){
     try {
         const user_id=req.params.id
         const{password}=req.body
@@ -336,34 +336,6 @@ class User{
         
     }
     }
-
-
-
-    async change_twofactor(userId) {
-    try {
-      if (!userId) {
-        throw new Error("User ID is required to update two-factor.");
-      }
-  
-      // Assuming your user model has a field `twoFactor`
-      const updatedUser = await usermodel.findByIdAndUpdate(
-        userId,
-        { two_factor: false },
-        { new: true }
-      );
-  
-      if (updatedUser) {
-        console.log("Two-factor updated successfully:", updatedUser);
-      } else {
-        console.log("User not found for two-factor update.");
-      }
-    } catch (error) {
-      console.error("Error updating two-factor:", error);
-    }
-  }
-
-
-
 
 /******* PRODUCT EJS PAGE RENDERING****************/
 
@@ -399,7 +371,7 @@ async Product(req,res){
 async ProductSearch(req, res) {
     try {
       const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
-  
+        
       const allproduct = await productmodel.aggregate([
         {
           $addFields: {
@@ -470,9 +442,8 @@ async ProductSearch(req, res) {
     }
   }
   
-  
 /*************** ADD TO CART EJS PAGE RENDERING FUNCTION*******************/
-async addtocart(req,res){
+async AddToCart(req,res){
     try {
         res.render('user/addcart')
     } catch (error) {
@@ -482,57 +453,9 @@ async addtocart(req,res){
     }
 }
 
-/*********************** ADD TO CART FUNCTION ***********************/
-async add_to_cart(req,res){
-    try {
-        const { productId } = req.body; // Get product ID from the request
-        const userId = req.user._id; // Assuming user is authenticated
-    
-        // Find the product in the database
-        const product = await productmodel.findById(productId);
-    
-        if (!product) {
-          return res.status(404).json({ message: "Product not found" });
-        }
-    
-        // Find or create a cart for the user
-        let cart = await cartmodel.findOne({ userId });
-    
-        if (!cart) {
-          cart = new cartmodel({ userId, products: [] });
-        }
-    
-        // Check if the product already exists in the cart
-        const existingProduct = cart.products.find(
-          (item) => item.productId.toString() === productId
-        );
-    
-        if (existingProduct) {
-          // Increase quantity if it already exists
-          existingProduct.quantity += 1;
-        } else {
-          // Add a new product to the cart
-          cart.products.push({
-            productId: product._id,
-            quantity: 1,
-          });
-        }
-    
-        // Save the updated cart
-        await cart.save();
-    
-        res.json({ message: "Product added to cart successfully" });
-      } catch (error) {
-        console.error("Error adding product to cart:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-      }
-}
-
-/****************************** FORGOT PASSWORD EJS PAGE*************************************/
-
 
 /******************************** FOROGOT PASSWORD FUNCTION**********************************************/
-async Forgot_Password(req,res){
+async ForgotPasskey(req,res){
     try {
         const{email}=req.body
         if(!email){
@@ -592,7 +515,7 @@ async Reset(req,res){
 
 
 /************************** RESET PASSWORD FUNCTION *******************************/
-async Reset_Password(req,res){
+async ResetPasskey(req,res){
     const {id,token}=req.params;
     const {password,confirm_password}=req.body;
         

@@ -231,7 +231,7 @@ class Admin{
     }
 
     /************************** CREATE CATEGORY FUNCTION**************************/
-    async Create_Category(req,res){
+    async CreateCategories(req,res){
         try {
             const {name}=req.body
             const nameexists=name.trim()
@@ -275,7 +275,7 @@ class Admin{
     try {
         const id= req.params.id
         const user= await usermodel.findById(id)
-        if(user.role=="admin"|| user.role=="Admin"){
+        if(user.role=="admin"){
             return res.redirect('/admin/alluser')
         }else{
             const existuser=await usermodel.findByIdAndDelete(id)
@@ -315,7 +315,7 @@ class Admin{
         }
     }
     /**************************UPDATE CATEGORY FUNCTION****************************/
-    async Update_Category(req,res){
+    async UpdateCategories(req,res){
         try {
             const id=req.params.id
             const {name}=req.body
@@ -336,7 +336,7 @@ class Admin{
     }
     /************************** CREATE PRODUCT FUNCTION *************************/
 
-    async Create_Product(req,res){
+    async CreateProducts(req,res){
         try {
             const { productName, price, stock, description, categoryId } = req.body;
             console.log(productName, price, stock, description, categoryId );
@@ -413,7 +413,7 @@ class Admin{
     }
 
     /**********************************UPDATE PRODUCT FUNTION ROUTER**********************/
-    async Update_Product(req, res) {
+    async UpdateProducts(req, res) {
         try {
             const id = req.params.id;
                 const existingProduct = await productmodel.findById(id);       
@@ -489,7 +489,7 @@ class Admin{
       
 
      /************************************** CREATE ORDER API FUNCTION************************************************/
-   async Create_Order(req,res){
+   async CreateOrders(req,res){
     try {
         const{order_stage,productId,categoryId,userId}=req.body
         const order=new ordermodel({
@@ -641,7 +641,7 @@ class Admin{
         }
     }
     /*********************************UPDATE PASSWORD FUNCTION ROUTER**********************************/
-    async Update_Password(req,res){
+    async UpdatePasswords(req,res){
         try{
             const user_id=req.params.id
             const{password}=req.body;

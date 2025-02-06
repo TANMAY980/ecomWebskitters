@@ -43,7 +43,7 @@ const userSchema=new Schema({
     phonenumber:{
         type:String,
         required:true
-    }
+    },
 },{
     timestamps:true,
     versionKey:false

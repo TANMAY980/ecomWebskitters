@@ -15,7 +15,7 @@ router.get('/forgotpassword',userController.ForgotPassword)
 
 
 /****** FORGOT PASSWORD FUNCTION ROUTER*******/
-router.post('/forgotPassword',userController.Forgot_Password)
+router.post('/forgotPassword',userController.ForgotPasskey)
 
 /********** PRODUCT PAGE ROUTER TO RENDER PRODUCT EJS PAGE ***********/
 router.get('/productpage',User.UserAuth,userController.Product)
@@ -26,13 +26,8 @@ router.get('/searchproduct',userController.ProductSearch)
 router.get('/verifyemail',userController.VerifyEmail)
 
 /************* EMAIL VERIFY FUNCTION ROUTER***********/
-router.post('/verifyEmail',userController.Verify_Email)
+router.post('/verifyEmail',userController.VerifyMail)
 
-/*************** TWO FACTOR EJS PAGE ROUTER ******************/
-router.get('/verifyusingemail',userController.twofactor)
-
-/************* TWO FACTOR  EMAIL VERIFY FUNCTION ROUTER***********/
-router.post('/twofactor',userController.verify_email_twofactor)
 
 /************** HOME PAGE ROUTER TO RENDER HOME EJS PAGE **************/
 
@@ -51,18 +46,17 @@ router.get('/userlogout',userController.Logout)
 router.get('/updatepass/:id',User.UserAuth,userController.UserCheck,userController.UpdatePassword)
 
 /*************** UPDATE USER PASSWORD FUNCTION****************/
-router.post('/updatepasskey/:id',User.UserAuth,userController.Update_Password)
+router.post('/updatepasskey/:id',User.UserAuth,userController.UpdatePasskey)
 
 router.get('/resetpassword/:id/:token',userController.Reset)
 
-router.post('/resetPassword/:id/:token',userController.Reset_Password)
+router.post('/resetPassword/:id/:token',userController.ResetPasskey)
+
 /****************** CART EJS PAGE ROUTER ***************/
-router.get('/addcart',userController.addtocart)
+router.get('/addcart',userController.AddToCart)
 
-router.post('/cart',userController.UserCheck,userController.add_to_cart)
 
-/**************************** CHANGE USER TWO FACTOR FUNCTION ROUTER*****************************/
-router.post('/twofactor',userController.change_twofactor)
+
 
 
 module.exports=router

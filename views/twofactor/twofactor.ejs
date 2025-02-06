@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enable 2FA</title>
+</head>
+<body>
+    <h1>Enable Two-Factor Authentication (2FA)</h1>
+    
+    <p>Scan the QR code below using your authentication app (like Google Authenticator) to enable 2FA:</p>
+    
+    <!-- Display the QR Code -->
+    <img src="<%= qrCode %>" alt="QR Code for 2FA">
+
+    <p>Or enter the following key in your authenticator app:</p>
+    <pre><%= secret %></pre> <!-- Display the secret (optional) -->
+
+    <form action="/verify-2fa" method="POST">
+        <label for="token">Enter the code from your authenticator app:</label>
+        <input type="text" id="token" name="token" required>
+        <button type="submit">Verify</button>
+    </form>
+</body>
+</html>

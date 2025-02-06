@@ -16,7 +16,8 @@ class Twilio{
                     from: process.env.TWILIO_NUMBER,
                     to:user.phonenumber
                 })
-                console.log(message);         
+                console.log(message);
+                return true         
             
         } catch (error) {
             console.log(error);

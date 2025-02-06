@@ -18,7 +18,7 @@ router.get('/admindashboard',Admin.AdminAuth,adminController.AdminCheck,adminCon
 router.get('/createproduct',Admin.AdminAuth,adminController.AdminCheck,adminController.CreateProduct)
 
 /****************** CREATE PRODUCT PAGE FUNCTION ROUTER**************************************/
-router.post('/createproducts',Admin.AdminAuth,adminController.AdminCheck,uploadimage.single('image'),adminController.Create_Product)
+router.post('/createproducts',Admin.AdminAuth,adminController.AdminCheck,uploadimage.single('image'),adminController.CreateProducts)
 
 /**************** ALL PRODUCT EJS PAGE ROUTER **************/
 router.get('/allproducts',Admin.AdminAuth,adminController.AdminCheck,adminController.AllProduct)
@@ -39,7 +39,7 @@ router.get('/getproduct',Admin.AdminAuth,adminController.AdminCheck,adminControl
 router.get('/createcategory',Admin.AdminAuth,adminController.AdminCheck,adminController.CreateCategory)
 
 /**************** CREATE CATEGORY FUNCTION ROUTER**************/
-router.post('/createallcategory',Admin.AdminAuth,adminController.AdminCheck,adminController.Create_Category)
+router.post('/createallcategory',Admin.AdminAuth,adminController.AdminCheck,adminController.CreateCategories)
 
 /******************** DELETE CATEGORY FUNCTION ROUTER********************/
 router.get('/deletecategory/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.DeleteCategory)
@@ -48,13 +48,13 @@ router.get('/deletecategory/:id',Admin.AdminAuth,adminController.AdminCheck,admi
 router.get('/Updatecategory/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.UpdateCategory)
 
 /********************* UPDATE CATEGORY FUNCTION ROUTER*******************************/
-router.post('/updatecategory/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.Update_Category)
+router.post('/updatecategory/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.UpdateCategories)
 
 /************************* UPDATE PRODUCT EJS PAGE ROUTER****************************************/
 router.get('/updateproducts/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.UpdateProduct)
 
 /************************* UPDATE PRODUCT FUNCTION ROUTER****************************************/
-router.post('/updateproduct/:id',Admin.AdminAuth,adminController.AdminCheck,uploadimage.single('image'),adminController.Update_Product)
+router.post('/updateproduct/:id',Admin.AdminAuth,adminController.AdminCheck,uploadimage.single('image'),adminController.UpdateProducts)
 
 /**************************** DELETE PRODUCT FUNCTION*******************************************************/
 router.get('/deleteproduct/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.DeleteProduct)
@@ -66,7 +66,7 @@ router.get('/deleteproduct/:id',Admin.AdminAuth,adminController.AdminCheck,admin
 router.get('/updatepass/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.UpdatePassword)
 
         /******************** UPDATE PASSWORD FUNCTION ROUTER ********************/
-router.post('/updatePassword/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.Update_Password)
+router.post('/updatePassword/:id',Admin.AdminAuth,adminController.AdminCheck,adminController.UpdatePasswords)
 
 /********************* LOGOUT FUNCTION ROUTER ****************/
 router.get('/logoutuser',Admin.AdminAuth,adminController.AdminCheck,adminController.Logout)
@@ -99,7 +99,7 @@ router.post('/emailverifying',adminController.EmailVerify)
 
 
 /******************************ORDER CREATE FUNCTION********************/
-router.post('/createorder',Admin.AdminAuth,adminController.AdminCheck,adminController.Create_Order)
+router.post('/createorder',Admin.AdminAuth,adminController.AdminCheck,adminController.CreateOrders)
 
 
 /**************************** SEND ORDER STATUS NOTIFICATION FUNCTION **************************/
