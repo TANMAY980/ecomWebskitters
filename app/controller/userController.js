@@ -2,28 +2,27 @@ const mongoose=require('mongoose')
 const transporter=require('../config/emailConfig')
 const usermodel=require('../model/usermodel')
 const productmodel=require('../model/productmodel')
-const cartmodel=require('../model/cartmodel')
 const categorymodel=require('../model/categorymodel')
 const emailverifymodel=require('../model/verifyEmailmodel')
-const{sendEmail,sendEmailVerificationOTP,sendupdatepasswordmessage}=require('../helper/sendEmail')
-const{sendMessage}=require('../helper/sendSms')
+const sendEmail=require('../helper/sendEmail')
+const sendmessage=require('../helper/sendSms')
 const bcrypt=require('bcryptjs')
 const jwt=require('jsonwebtoken')
 class User{
 
 
     /**********usercheck************/
-    async usercheck(req,res,next){
+    async UserCheck(req,res,next){
         if(req.user){
             console.log('after login',req.user);
             next()
         }else{
-            res.redirect('/usersignin')
+            res.redirect('https://ecomwebskitters.onrender.com/usersignin')
         }
     }
 
 /** USER SIGNUP EJS PAGE RENDERING**/
-    async userSignUp(req,res){
+    async UserSignUp(req,res){
         try {
             res.render('user/signUp',{
                 tite:"user sign up page"
@@ -35,7 +34,7 @@ class User{
 
 
 /** USER SIGNIN EJS PAGE RENDERING**/
-    async userSignIn(req,res){
+    async UserSignIn(req,res){
         try {
             res.render('user/signIn',{
                 title:"user sign in page"
@@ -50,7 +49,7 @@ class User{
 
 /** USER SIGNIN EJS PAGE RENDERING**/
 
-    async forgotPassword(req,res){
+    async ForgotPassword(req,res){
         try {
             res.render('user/forgotpassword',{
                 title:"forgot password page"
@@ -64,7 +63,7 @@ class User{
 
 
 /************* HOME EJS PAGE RENDERING***************/
-    async home(req,res){
+    async Home(req,res){
         try {
             const allcategory = await categorymodel.find();
             const allproduct = await productmodel.find();
@@ -91,9 +90,9 @@ class User{
         }    
     }
 
-/**************** EMAIL VERIFY PAGE ROUTER**********************************/
+/**************** EMAIL VERIFY EJS PAGE RENDERING FUNCTION**********************************/
 
-    async verifyemail(req,res){
+    async VerifyEmail(req,res){
         try {
             res.render('user/emailverify',{
                 title:"email verify page"
@@ -113,35 +112,36 @@ class User{
         }
     }
 /**************** VERIFY EMAIL FUNCTION **********************************/
-    async verify_email(req,res){
+    async Verify_Email(req,res){
         try {
             const{email,otp}=req.body
             if(!(email && otp)){
-                return res.redirect('/verifyemail')
+                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail')
             }
             const existuser = await usermodel.findOne({email})
             if(!(existuser)){
-                return res.redirect('/usersignup')
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
             }
             if(existuser.is_verified){
-                return res.render('/usersignin')
+                return res.render('https://ecomwebskitters.onrender.com/usersignin')
             }
             const emailverification=await emailverifymodel.findOne({ userId: existuser._id, otp })
             if (!emailverification) {
                 // If no matching OTP and user is not verified, resend OTP
                 if (!existuser.is_verified) {
-                    await sendEmailVerificationOTP(req, existuser);
-                    return res.redirect('/verifyemail');
+                   const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
+                   const sendOtp= await sendmessage.SendMessage(req,existuser)
+                    return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
                 }
-                return res.redirect('/verifyemail');
+                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
             }
             const currentTime = new Date();
         const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); // 15 minutes
 
         if (currentTime > expirationTime) {
             // OTP expired, send new OTP
-            await sendEmailVerificationOTP(req, existuser);
-            return res.redirect('/verifyemail');
+           const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
+            return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
         }
         
         // OTP is valid and not expired, mark the email as verified
@@ -151,7 +151,7 @@ class User{
         // Delete email verification document
         await emailverifymodel.deleteMany({ userId: existuser._id });
 
-        return res.redirect('/usersignin');
+        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
         } catch (error) {
             console.log(error);      
         }
@@ -196,7 +196,7 @@ class User{
         // Delete email verification document
         await emailverifymodel.deleteMany({ userId: existuser._id });
 
-        return res.redirect('/usersignin');
+        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
         } catch (error) {
             console.log(error);      
         }
@@ -204,34 +204,41 @@ class User{
 
 
 /***************** USER REGISTER FUNCTION***************/
-    async user_register(req,res){
+    async UserRegister(req,res){
         try {
             const{email,name,username,password,confirm_password,phonenumber}=req.body
             console.log(email,name,username,password,confirm_password,phonenumber);
             
             if(!(email && name && username && password  && confirm_password &&phonenumber)){
-                return res.redirect('/usersignup')
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
             }
             if(password !==confirm_password){
-                return res.redirect('/usersignup')
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
             }
             const existinguser= await usermodel.findOne({email})
             if(existinguser){
-                return res.redirect('/usersignin')
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
             }
+            const formattedPhoneNumber = phonenumber.startsWith('+91') ? phonenumber : `+91${phonenumber}`;
             const user_password=password
             const user={
                 email,
                 name,
                 username,
                 password: bcrypt.hashSync(password,bcrypt.genSaltSync(10)),
-                phonenumber
+                phonenumber:formattedPhoneNumber
             }
             const userdata=await usermodel.create(user)
-            const url=`http://localhost:${process.env.PORT}/usersignin`
-            sendEmail(user,user_password,url)
-            if(sendEmail){
-                return res.redirect('/usersignin')
+            if(!userdata){
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
+            }
+            const url=`https://ecomwebskitters.onrender.com/usersignin`
+            const ecomwebskittersurl=`https://ecomwebskitters.onrender.com`
+            const sendmail = await sendEmail.SendRegistrationEmail(req,res,user,user_password,url,ecomwebskittersurl)
+            const sendsms= await sendmessage.SendRegisterMessage(req,res,user)
+            if(sendmail && sendsms){
+                console.log("mail and sms sent successfully");
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
             }         
 
         } catch (error) {
@@ -240,11 +247,11 @@ class User{
     }
 
 /****************USER SIGNIN FUNCTION**************/
-async usersignin(req,res){
+    async UserSignin(req,res){
     try {
         const {emailOrUsername,password}=req.body
         if(!(emailOrUsername && password)){
-            return res.redirect('/usersignin')
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
         }
         console.log(emailOrUsername);
         const input = emailOrUsername.trim();
@@ -252,22 +259,15 @@ async usersignin(req,res){
             $or: [{ email: input }, { username: input }]
           });
           if(!existuser){
-            return res.render('/usersignin')
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignup');
           }
           if(!existuser.is_verified){
-            const otp= await sendEmailVerificationOTP(req,existuser)
-            sendMessage(req,existuser,otp)
-            if(sendEmailVerificationOTP && sendMessage){
-                return res.redirect('/verifyemail')
+            const sendotpEmail= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
+            const sendotpMessage=await sendmessage.SendMessage(req,res,existuser)
+            if(sendotpEmail && sendotpMessage){
+                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail')
             }  
           }
-          if(!existuser.two_factor){
-            const otp= await sendEmailVerificationOTP(req,existuser)
-            sendMessage(req,existuser,otp)
-            if(sendEmailVerificationOTP && sendMessage){
-                return res.redirect('/verifyusingemail')
-            }  
-         }
          
         if(existuser && existuser.role=="user" && (await bcrypt.compare(password,existuser.password))){
             const token=jwt.sign({
@@ -278,23 +278,26 @@ async usersignin(req,res){
             },process.env.USER_SECRET_KEY,{expiresIn:"15d"})
             console.log(token);
             if(token){
+                const url=`https://ecomwebskitters.onrender.com/usersignin`
                 res.cookie("userToken",token)
-                return res.redirect('/productpage')
+                const sendemail = await sendEmail.SendSiginingMessage(req,res,existuser,url)
+                const sendsms=await sendmessage.SendLoginMessage(req,res,existuser,url)
+                return res.redirect('https://ecomwebskitters.onrender.com/productpage')
             }else{
-                return res.redirect('/usersignin')
+                return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
             }
            
         }
-        return res.redirect('/usersignin')
+        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
     } catch (error) {
         console.log(error);   
         res.status(500).send("Internal Server Error");
     }
-}
+    }
 
 /******************** UPDATE PASSWORD EJS PAGE RENDERING FUNCTION**************************/
 
-async updatepassword(req,res){
+    async UpdatePassword(req,res){
     try {
         res.render('user/updatepassword',{
             data:req.user
@@ -303,11 +306,11 @@ async updatepassword(req,res){
         console.log(error);
         
     }
-}
+    }
 
 
 //*********************** UPDATE PASSWORD FUNCTION**************************** */
-async update_password(req,res){
+    async Update_Password(req,res){
     try {
         const user_id=req.params.id
         const{password}=req.body
@@ -332,11 +335,11 @@ async update_password(req,res){
         res.status(500).send("Internal Server Error");
         
     }
-}
+    }
 
 
 
-async change_twofactor(userId) {
+    async change_twofactor(userId) {
     try {
       if (!userId) {
         throw new Error("User ID is required to update two-factor.");
@@ -364,7 +367,7 @@ async change_twofactor(userId) {
 
 /******* PRODUCT EJS PAGE RENDERING****************/
 
-async product(req,res){
+async Product(req,res){
     try {
         const allcategory = await categorymodel.find();
         const allproduct = await productmodel.find();
@@ -393,7 +396,7 @@ async product(req,res){
 
 /*********************** PRODUCT SEARCH APPLYING WITH THE HELP OF CATEGORY NAME PRICE****************************************/
 
-async productsearch(req, res) {
+async ProductSearch(req, res) {
     try {
       const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
   
@@ -448,12 +451,19 @@ async productsearch(req, res) {
       ]);
   
       const allcategory = await categorymodel.find();
-  
-      res.render("product/product", {
-        data: allproduct,
-        categorydata: allcategory,
-        userdata: req.user,
-      });
+      if(req.user){
+        res.render("product/product", {
+            data: allproduct,
+            categorydata: allcategory,
+            userdata: req.user,
+          });
+      }else{
+        res.render('user/home', {
+            data: allproduct,
+            categorydata: allcategory,
+        });
+      }
+      
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).send("Internal Server Error");
@@ -519,17 +529,10 @@ async add_to_cart(req,res){
 }
 
 /****************************** FORGOT PASSWORD EJS PAGE*************************************/
-async forgotPassword(req,res){
-    try {
-        res.render('user/forgotpassword')
-    } catch (error) {
-        console.log(error);
-        
-    }
-}
+
 
 /******************************** FOROGOT PASSWORD FUNCTION**********************************************/
-async forgot_password(req,res){
+async Forgot_Password(req,res){
     try {
         const{email}=req.body
         if(!email){
@@ -574,7 +577,7 @@ async forgot_password(req,res){
     }
 }
 /****************************** RESET PASSWORD EJS PAGE**********************************/
-async reset(req,res){
+async Reset(req,res){
     try {
         const { id, token } = req.params;
         res.render('user/resetpassword',{
@@ -589,7 +592,7 @@ async reset(req,res){
 
 
 /************************** RESET PASSWORD FUNCTION *******************************/
-async reset_password(req,res){
+async Reset_Password(req,res){
     const {id,token}=req.params;
     const {password,confirm_password}=req.body;
         
@@ -622,7 +625,7 @@ async reset_password(req,res){
 
 
 /*********USER LOGOUT FUNCTION***********/
-async logout(req,res){
+async Logout(req,res){
     try{
         res.clearCookie("userToken")
         res.redirect('/')

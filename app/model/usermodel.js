@@ -22,18 +22,14 @@ const userSchema=new Schema({
         minlength: 6,
         unique: true,
         match: [
-            /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@#$%^&+=!])[A-Za-z\d@#$%^&+=!]{6,}$/,
-            'Username must include at least one letter, one number, and one special character'
-        ]
+            /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@._-])[A-Za-z\d@._-]{6,}$/,
+            'Username must include at least one letter, one number, and one special character (@, ., _, or -)'
+          ]
     },
     password:{
         type:String,
         required:true,
         minlength:8
-    },
-    two_factor:{
-        type:Boolean,
-        default:false,
     },
     role:{
         type:String,

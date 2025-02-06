@@ -22,21 +22,35 @@
           </div> 
         <div class="form-group mt-2">
             <label for="exampleInputEmail1" class="fw-bold">UserName</label>
-            <input type="text" name="username" class="form-control"  placeholder="enter username ex:Tanmay@18" required>
+            <input type="text" name="username" class="form-control"  placeholder="enter username ex:Tanmay_@18" required>
+            <small class="form-text text-muted">
+            Username must include at least one letter Aa, one number,and one special character (@, ., _, or -)
+            </small>
           </div>
           <div class="form-group mt-2">
-            <label for="exampleInputEmail1" class="fw-bold">PhoneNumber</label>
-            <input type="text" name="phonenumber" class="form-control"  placeholder="enter your phone number with +91 code" required>
+            <label for="phoneNumber" class="fw-bold">Phone Number</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text">+91</span>
+              </div>
+              <input type="text" name="phonenumber" class="form-control" 
+                     placeholder="Enter phone number" required 
+                     pattern="[0-9]{10}" title="Enter a valid 10-digit number">
+                    <small class="text-muted">due to free Twilio service you won't able to add your number</small>
+            </div>
           </div>
         <div class="form-group mt-2">
             <label for="exampleInputEmail1" class="fw-bold">Password</label>
-            <input type="password" name="password" class="form-control" placeholder="Enter Password min 8 char" required>
+            <input type="password" name="password" class="form-control" placeholder="Enter Password" required>
+            <small class="text-muted">Password must be at least 8 characters long.</small>
         </div>
         <div class="form-group mt-2">
             <label for="exampleInputEmail1" class="fw-bold">confirm Password</label>
             <input type="password" name="confirm_password" class="form-control" placeholder="Enter confirm Password" required>
+            <small class="text-muted">Confirm Password must be same as Password</small>
         </div>
-        <div class="mb-2 d-flex justify-content-end"><a href="/forgotPassword"style="color: red;">forgot password?</a></div>
+        <div class="mb-2 d-flex justify-content-end"><a href="/forgotPassword"style="color: red;">forgot password?</a>
+          </div>
         <button type="submit" class="btn btn-primary mt-3 d-block mx-auto">Sign Up</button>
         <div class="mb-2 text-center mt-3 "><a href="/usersignin">Already user? Sign In</a></div>
       </form> 

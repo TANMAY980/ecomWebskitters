@@ -5,8 +5,9 @@ const categorymodel=require('../model/categorymodel')
 const productmodel=require('../model/productmodel')
 const usermodel=require('../model/usermodel')
 const emailotpmodel=require('../model/verifyEmailmodel')
-
-const {sendEmailVerificationOTP,sendsiginmessage,sendStatusorder}=require('../helper/sendEmail')
+const Fs=require('fs')
+const Path=require('path')
+const sendEmail=require('../helper/sendEmail')
 const{sendMessage,sendLoginMessage}=require('../helper/sendSms')
 const jwt=require('jsonwebtoken')
 const bcrypt=require('bcryptjs')
@@ -18,32 +19,35 @@ class Admin{
 
 
     /*************CHEKING ADMINUSER *******************/
-    async admincheck(req,res,next){
-        if(req.admin){
-            console.log('after login',req.admin);
-            next()
-        }else{
-            res.redirect('/admin/adminsignin')
-        }
+    async AdminCheck(req,res,next){
+        try {
+            if(req.admin){
+                console.log('after login',req.admin);
+                next()
+            }else{
+                res.redirect('/admin/adminsignin')
+            }
+        } catch (error) {
+            console.log(error);
+            res.status(500).send("Internal Server Error");
+        }  
     }
 
 
     /** ADMIN SIGNIN EJS PAGE RENDERING**/
-    async adminSignIn(req,res){
+    async AdminSignIn(req,res){
         try {
-            
             res.render('admin/adminSignIn',{
-                title:"admin login page",
-                
+                title:"admin login page",    
             })
         } catch (error) {
             console.log(error);
-            
+            res.status(500).send("Internal Server Error");
         }
     }
 
     /********** ADMIN SIGNIN FUNCTION ************/
-    async adminsignin(req,res){
+    async AdminSignin(req,res){
         try {
             const {emailOrUsername,password}=req.body
             if(!(emailOrUsername && password)){
@@ -62,10 +66,10 @@ class Admin{
               }
             console.log(existuser);
               
-             if(!existuser.two_factor){
-                const otp= await sendEmailVerificationOTP(req,existuser)
-                sendMessage(req,existuser,otp)
-                if(sendEmailVerificationOTP && sendMessage){
+             if(!existuser.is_verified){
+                const otp= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
+                const sendmessage=await sendMessage(req,existuser,otp)
+                if(otp && sendmessage){
                     return res.redirect('/admin/emailverify')
                 }
                 
@@ -81,16 +85,14 @@ class Admin{
                 },process.env.ADMIN_SECRET_KEY,{expiresIn:"45d"})
                 console.log(token);
                 if(token){
-                    const url=`http://localhost:${process.env.PORT}/admin/adminsignin`
+                    const url=`https://ecomwebskitters.onrender.com/admin/adminsignin`
                     res.cookie("adminToken",token)
-                    sendsiginmessage(req,existuser,url)
+                   const sendsigingmessage= await sendEmail.SendSiginingMessage(req,res,existuser,url)
                     // sendLoginMessage(req,existuser)
                     return res.redirect('/admin/admindashboard')
                 }else{
-                    return res.redirect('/admin/adminsignin')
-                    
-                }
-               
+                    return res.redirect('/admin/adminsignin')   
+                }  
             }
             return res.redirect('/admin/adminsignin')
         } catch (error) {
@@ -100,19 +102,19 @@ class Admin{
     }
 
      /************************* VERIFY EMAIL EJS PAGE FUNCTION *****************************/
-     async verifyemail(req,res){
+     async VerifyEmail(req,res){
         try {
             res.render('admin/emailverify',{
-
             })
         } catch (error) {
             console.log(error);
+            res.status(500).send("Internal Server Error");
             
         }
     }
 
     /***************** VERIFY EMAIL FUNCTION ***************/
-    async emailverify(req,res){
+    async EmailVerify(req,res){
         try {
             const{email,otp}=req.body
             if(!email && otp){
@@ -132,8 +134,10 @@ class Admin{
             if (!emailverification) {
                 // If no matching OTP and user is not verified, resend OTP
                 if (!existuser.is_verified) {
-                    await sendEmailVerificationOTP(req, existuser);
+                   const emailverification = await sendEmail.SendEmailVerificationOTP(req,res,existuser);
+                   if(emailverification){
                     return res.redirect('/admin/emailverify')
+                   }   
                 }
                 return res.redirect('/admin/emailverify')
             }
@@ -142,7 +146,7 @@ class Admin{
 
         if (currentTime > expirationTime) {
             // OTP expired, send new OTP
-            await sendEmailVerificationOTP(req, existuser);
+            const sendotp=await sendEmail.SendEmailVerificationOTP(req,res,existuser);
             return res.redirect('/admin/emailverify');
         }
 
@@ -155,13 +159,14 @@ class Admin{
 
         return res.redirect('/admin/adminsignin');
         } catch (error) {
-            console.log(error);    
+            console.log(error);
+            res.status(500).send("Internal Server Error");    
         }
     }
    
 
     /** ADMIN DASHBOARD EJS PAGE RENDERING FUNCTION**/
-    async adminDashboard(req,res){
+    async AdminDashboard(req,res){
         try {
             const categorydata=await categorymodel.countDocuments()
             const productdata=await productmodel.countDocuments()
@@ -182,7 +187,7 @@ class Admin{
     }
 
     /******** CREATE PRODUCT EJS PAGE RENDERING********/
-    async createproduct(req,res){
+    async CreateProduct(req,res){
         try {
             const category=await categorymodel.find()
             res.render('admin/createProduct',{
@@ -198,7 +203,7 @@ class Admin{
 
 
     /****************** ALL CATEGORY EJS PAGE RENDERING*****************/
-    async allcategory(req,res){
+    async AllCategory(req,res){
         try {
             const alldata=await categorymodel.find()
             res.render('admin/allcategory',{
@@ -213,7 +218,7 @@ class Admin{
     }
 
     /****************** CREATE CATEGORY EJS PAGE RENDERING*****************************/
-    async createCategory(req,res){
+    async CreateCategory(req,res){
         try {
             res.render('admin/createcategory',{
                 title:"create category",
@@ -226,7 +231,7 @@ class Admin{
     }
 
     /************************** CREATE CATEGORY FUNCTION**************************/
-    async create_category(req,res){
+    async Create_Category(req,res){
         try {
             const {name}=req.body
             const nameexists=name.trim()
@@ -250,9 +255,9 @@ class Admin{
         }
     }
 /*********************** ALL USERS EJS PAGE*****************************/
-async all_users(req,res){
+    async AllUsers(req,res){
     try {
-        const userdata=await usermodel.find()
+        const userdata=await usermodel.find({ role: { $ne: "admin" } })
         res.render('admin/allusers',{
             data:userdata,
             
@@ -263,10 +268,10 @@ async all_users(req,res){
 
         })
     }
-}
+    }
 
 /**************************** DELETE USERS FUNCTION**********************************/
-async delelte_user(req,res){
+    async DeleteUser(req,res){
     try {
         const id= req.params.id
         const user= await usermodel.findById(id)
@@ -280,10 +285,10 @@ async delelte_user(req,res){
         console.log(error);
         
     }
-}
+    }
     /**********************DELETE CATEGORY FUNCTION *********************/
 
-    async delete_category(req,res){
+    async DeleteCategory(req,res){
         try {
             const id=req.params.id
             const category=await categorymodel.findByIdAndDelete(id)
@@ -296,9 +301,8 @@ async delelte_user(req,res){
         }
     }
 
-
     /*********************UPDATE CATEGORY  EJS PAGE RENDERING FUNCTION*************************/
-    async updatecategory(req,res){
+    async UpdateCategory(req,res){
         try {
             const id=req.params.id
             const edit=await categorymodel.findById(id)
@@ -311,7 +315,7 @@ async delelte_user(req,res){
         }
     }
     /**************************UPDATE CATEGORY FUNCTION****************************/
-    async update_category(req,res){
+    async Update_Category(req,res){
         try {
             const id=req.params.id
             const {name}=req.body
@@ -332,7 +336,7 @@ async delelte_user(req,res){
     }
     /************************** CREATE PRODUCT FUNCTION *************************/
 
-    async create_product(req,res){
+    async Create_Product(req,res){
         try {
             const { productName, price, stock, description, categoryId } = req.body;
             console.log(productName, price, stock, description, categoryId );
@@ -363,7 +367,7 @@ async delelte_user(req,res){
 
 }
     /************************ ALL PRODUCT EJS PAGE RENDERING****************************/
-    async allproduct(req, res) {
+    async AllProduct(req, res) {
         try {
             const allcategory = await categorymodel.find();
             const allproduct = await productmodel.find();
@@ -394,7 +398,7 @@ async delelte_user(req,res){
     
 
     /**************************** UPDATE PRODUCT EJS PAGE RENDERING************************************/
-    async updateproduct(req,res){
+    async UpdateProduct(req,res){
         try {
             const id=req.params.id
             const edit=await productmodel.findById(id)
@@ -409,7 +413,7 @@ async delelte_user(req,res){
     }
 
     /**********************************UPDATE PRODUCT FUNTION ROUTER**********************/
-    async update_product(req, res) {
+    async Update_Product(req, res) {
         try {
             const id = req.params.id;
                 const existingProduct = await productmodel.findById(id);       
@@ -430,12 +434,26 @@ async delelte_user(req,res){
         }
     }
 
-    /************************ DELETE PRODUCT FUNCTION ROUTER******************************/
-    async delete_product(req,res){
+    /************************ DELETE PRODUCT FUNCTION ******************************/
+    async DeleteProduct(req,res){
         try {
             const id=req.params.id
-            const product=await productmodel.findByIdAndDelete(id)
-            if(product){
+            const product=await productmodel.findById(id)
+            if(!product){
+                return res.redirect('/admin/allproducts')
+            }
+            const imagepath=Path.join(__dirname,'../uploads', product.image)
+            if(Fs.existsSync(imagepath)){
+                Fs.unlink(imagepath,(err)=>{
+                    if(err){
+                        console.log("something went worng",err);
+                    }else{
+                        console.log("Image deleted successfully");    
+                    }
+                })
+            }
+            const productstatus=await productmodel.findByIdAndDelete(id)
+            if(productstatus){
                 return res.redirect('/admin/allproducts')
             }
             return res.redirect('/admin/allproducts')
@@ -446,8 +464,8 @@ async delelte_user(req,res){
     }
 
 
-    /********************* ALL ORDER EJS ROUTER **************************************/
-    async allorder_product(req, res) {
+    /********************* ALL ORDER EJS PAGE RENDERING FUNCTION**************************************/
+    async AllorderProduct(req, res) {
         try {
           // Fetch all orders and populate related product, category, and user data
           const allorder = await ordermodel
@@ -470,9 +488,8 @@ async delelte_user(req,res){
       }
       
 
-
-     /************************************** CREATE ORDER ************************************************/
-   async create_Order(req,res){
+     /************************************** CREATE ORDER API FUNCTION************************************************/
+   async Create_Order(req,res){
     try {
         const{order_stage,productId,categoryId,userId}=req.body
         const order=new ordermodel({
@@ -501,10 +518,8 @@ async delelte_user(req,res){
    }
 
 
-
-
-    /***************************** SEARCH PRODUCT ROUTER****************************************************/
-    async searchproduct(req, res) {
+    /***************************** SEARCH PRODUCT FUNCTION****************************************************/
+    async SearchProduct(req, res) {
         try {
           const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
       
@@ -571,7 +586,7 @@ async delelte_user(req,res){
          
    /****************************** NOTIFY USER  FUNCTION **********************************/
    
-   async notify(req, res) {
+   async Notify(req, res) {
     try {
         const { orderId } = req.body;
 
@@ -597,14 +612,16 @@ async delelte_user(req,res){
         }
 
         const message = `Your order with ID ${orderId} for product "${productName}" is currently in "${order.order_stage}" stage.`;
-        await sendStatusorder(userEmail, message);
-
-        return res.redirect('/admin/allorder');
+        const notification = await sendEmail.SendOrderStatus(req,res,userEmail, message);
+        if(notification){
+            return res.redirect('/admin/allorder');
+        }
+       
     } catch (error) {
         console.error('Error sending notification:', error);
         res.status(500).json({ message: 'Failed to send notification' });
     }
-}
+    }   
 
       
     
@@ -612,18 +629,19 @@ async delelte_user(req,res){
 
     /********************************** UPDATE PASSWORD EJS PAGE RENDERING***********************************/
     
-    async updatepassword(req,res){
+    async UpdatePassword(req,res){
         try {
             res.render('admin/updatepassword',{
-                data:req.admin
+                data:req.admin,
+                title:"update password page"
             })
         } catch (error) {
             console.log(error);
-            
+            return res.status(500).send("Internal Server Error");
         }
     }
     /*********************************UPDATE PASSWORD FUNCTION ROUTER**********************************/
-    async update_password(req,res){
+    async Update_Password(req,res){
         try{
             const user_id=req.params.id
             const{password}=req.body;
@@ -646,99 +664,98 @@ async delelte_user(req,res){
 
         }catch(error){
             console.log(error);
-            
+            return res.status(500).send("Internal Server Error");
         }
     }
 
-    /*************************** LOGOUT USER**********************************/
-    async logout(req, res) {
+    /*************************** LOGOUT USER FUNCTION**********************************/
+    async Logout(req, res) {
         try { 
-            const adminId = req.admin; // Ensure admin ID is correctly retrieved from req
-            console.log(adminId);
-            
-        if (!adminId) {
-            console.log('Admin ID is not defined.');
-            return res.redirect('/admin/adminsignin');
-        }
-
-        // Use $set to update the two_factor field to false
-        const updateResult = await usermodel.findByIdAndUpdate(
-            adminId,
-            { $set: { two_factor: false } }, // Explicitly use $set for updating fields
-            { new: true } // Return the updated document
-        );
             res.clearCookie("adminToken");
             res.redirect('/admin/adminsignin');
         } catch (error) {
             console.log('Error during logout:', error);
+            return res.status(500).send("Internal Server Error");
         }
     }
     
     
-    /******************** FORGOT PASSWORD EJS PAGE ROUTER*************************/
-    async forgotpassword(req,res){
+    /******************** FORGOT PASSWORD EJS PAGE RENDERING FUNCTION*************************/
+    async Forgot_Password(req,res){
         try {
-            res.render('admin/forgotpassword')
+            res.render('admin/forgotpassword',{
+                title:"forgot password page"
+            })
         } catch (error) {
             console.log(error);
+            return res.status(500).send("Internal Server Error");
             
         }
     }
 
-/*******************ALERT PAGE **********************/
-    async alertpage(req,res){
-        res.render('admin/alert',{
-            title:"alert page"
-        })
+/*******************ALERT EJS PAGE RENDERING FUNCTION**********************/
+    async AlertPage(req,res){
+        try {
+            res.render('admin/alert',{
+                title:"alert page"
+            })
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send("Internal Server Error");  
+        }
+        
     }
 
-    /**************FORGOT PASSWORD FUNCTION ROUTER***************/
-    async forgotPassword(req,res){
+    /**************FORGOT PASSWORD FUNCTION ***************/
+    async ForgotPassword(req,res){
         try {
             const {email}=req.body;
             if(!email){
-                return res.redirect('admin/forgotpass')
+                return res.redirect('/admin/forgotpass')
             }
             const user=await usermodel.findOne({email});
             if(!user){
-                return res.redirect('admin/adminsignin')
+                return res.redirect('/admin/adminsignin')
             }
             const secret=user._id+process.env.ADMIN_SECRET_KEY;
             const token =jwt.sign({userID:user._id},secret,{expiresIn:'5m'})
-            const resetLink=`http://localhost:9000/admin/reset/${user._id}/${token}`;
+            const resetLink=`https://ecomwebskitters.onrender.com/admin/reset/${user._id}/${token}`;
 
-            await transporter.sendMail({
+            const sendresetlink=await transporter.sendMail({
                 from:process.env.EMAIL_FROM,
                 to:user.email,
                 subject:"Password Reset Link",
                 html:`<p>Hi ${user.name},</p>
                 <p>As you have requested for reset password instructions, here they are, please follow the URL:<br> <a href="${resetLink}"</a>Reset.</p>
-                <p>Alternatively, open the following url in your browser <a href="http://localhost:9000/reset/674d8fd078fcefbfeda6aff4/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOiI2NzRkOGZkMDc4ZmNlZmJmZWRhNmFmZjQiLCJpYXQiOjE3MzMzNDAyNzksImV4cCI6MTczMzM0MTE3OX0.Yn1zLDAIl1ESmnyKThsTK59r6DwvhSANHjBm8mx38ds"</a></p>
+                <p>Alternatively, open the following url in your browser <a href="https://ecomwebskitters.onrender.com/admin/reset/674d8fd078fcefbfeda6aff4/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOiI2NzRkOGZkMDc4ZmNlZmJmZWRhNmFmZjQiLCJpYXQiOjE3MzMzNDAyNzksImV4cCI6MTczMzM0MTE3OX0.Yn1zLDAIl1ESmnyKThsTK59r6DwvhSANHjBm8mx38ds"</a></p>
                 `
             })
-            console.log("fogot password reset link send");
-            
-            return res.redirect('admin/adminsignin')
+            console.log("forgot password reset link send");
+            if(sendresetlink){
+                return res.redirect('/admin/adminsignin')
+            }
+            return res.redirect('/admin/adminsignin')
         } catch (error) {
             console.log(error);
-            
+            return res.status(500).send("Internal Server Error");
         }
     }
 
     /************************RESET PASSWORD EJS PAGE RENDERING************************/
-    async reset(req,res){
+    async Reset(req,res){
         try {
             const { id, token } = req.params;
             res.render('admin/resetpassword',{
                 id,token
             })
         } catch (error) {
-            console.log(error);   
+            console.log(error);
+            return res.status(500).send("Internal Server Error");   
         }
     }
 
     /************************RESET PASSWORD FUNCTION********************************/
-    async resetpassword(req,res){
+    async ResetPassword(req,res){
         try {
             const {id,token}=req.params;
         const {password,confirm_password}=req.body;
@@ -769,6 +786,7 @@ async delelte_user(req,res){
         return res.redirect('/admin/adminsignin')
         } catch (error) {
             console.log(error);
+            return res.status(500).send("Internal Server Error");
             
         }
     }

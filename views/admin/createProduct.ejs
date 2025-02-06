@@ -84,44 +84,73 @@
       </button>
     </div>
   </nav>
-
+  <div class="container-fluid page-body-wrapper">
       <!-- partial -->
-
-    <div class="container mt-5">
-        <form action="/admin/createproducts" method="post" enctype="multipart/form-data" class="col-md-4 mt-3 mx-auto p-5 shadow rounded-4" style="background-color: #f2f0f3; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 10px;">
-            <h1 class="text-center">Create Product</h1>
-            <div class="form-group mt-2">
-                <label for="exampleInputEmail1" class="fw-bold">productName</label>
-                <input type="text" name="productName" class="form-control"  placeholder="Enter productName" required>
-              </div> 
-            <div class="form-group mt-2">
-                <label for="exampleInputEmail1" class="fw-bold">product price</label>
-                <input type="text" name="price" class="form-control"  placeholder="enter product price" required>
-              </div>
-            <div class="form-group mt-2">
-                <label for="exampleInputEmail1" class="fw-bold">product stock</label>
-                <input type="text" name="stock" class="form-control" placeholder="Enter stock" required>
+      <nav class="sidebar sidebar-offcanvas " id="sidebar">
+        <ul class="nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/createproduct">
+              <span class="menu-title"><button type="button" class="btn btn-primary">create products</button></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/allorder">
+              <span class="menu-title"><button type="button" class="btn btn-primary">All ordered detilas</button></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/allcategory">
+              <span class="menu-title"><button type="button" class="btn btn-primary">All categories... </button></span>
+            </a>
+          </li>
+        
+        </ul>
+      </nav>
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <!-- Card Section -->
+          <section class="content">
+            <div class="container">
+              <form action="/admin/createproducts" method="post" enctype="multipart/form-data" class="col-md-4 mx-auto p-5 shadow rounded-4" style="background-color: #f2f0f3; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 10px;">
+                  <h1 class="text-center">Create Product</h1>
+                  <div class="form-group mt-2">
+                      <label for="exampleInputEmail1" class="fw-bold">productName</label>
+                      <input type="text" name="productName" class="form-control"  placeholder="Enter productName" required>
+                    </div> 
+                  <div class="form-group mt-2">
+                      <label for="exampleInputEmail1" class="fw-bold">product price</label>
+                      <input type="text" name="price" class="form-control"  placeholder="enter product price" required>
+                    </div>
+                  <div class="form-group mt-2">
+                      <label for="exampleInputEmail1" class="fw-bold">product stock</label>
+                      <input type="text" name="stock" class="form-control" placeholder="Enter stock" required>
+                  </div>
+                  <div class="form-group mt-2">
+                      <label for="exampleInputEmail1" class="fw-bold">product description</label>
+                      <input type="text" name="description" class="form-control" placeholder="Enter product description" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleFormControlSelect1" class="fw-bold">Product Category</label>
+                    <select class="form-control" id="exampleFormControlSelect1" name="categoryId" required>
+                      <option value="">Select category...</option>
+                      <% data.forEach(category => { %>
+                        <option value="<%= category._id %>"><%= category.name %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="form-group mt-2">
+                      <label for="exampleInputEmail1" class="fw-bold">product image</label>
+                      <input type="file" name="image" accept="image/png ,image/jpeg " class="form-control" placeholder="Enter confirm Password" required>
+                  </div>
+                  <button type="submit" class="btn btn-primary mt-3 d-block mx-auto">Create Product</button>
+                </form> 
             </div>
-            <div class="form-group mt-2">
-                <label for="exampleInputEmail1" class="fw-bold">product description</label>
-                <input type="text" name="description" class="form-control" placeholder="Enter product description" required>
-            </div>
-            <div class="form-group">
-              <label for="exampleFormControlSelect1" class="fw-bold">Product Category</label>
-              <select class="form-control" id="exampleFormControlSelect1" name="categoryId" required>
-                <option value="">Select category...</option>
-                <% data.forEach(category => { %>
-                  <option value="<%= category._id %>"><%= category.name %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div class="form-group mt-2">
-                <label for="exampleInputEmail1" class="fw-bold">product image</label>
-                <input type="file" name="image" class="form-control" placeholder="Enter confirm Password" required>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3 d-block mx-auto">Create Product</button>
-          </form> 
+        </section>
+        </div>
+        <!-- main-panel ends -->
       </div>
+
+    </div>
     <!-- container-scroller -->
     <%-include('../layouts/footer')%>
     <!-- plugins:js -->
