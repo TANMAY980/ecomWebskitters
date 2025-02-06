@@ -157,49 +157,6 @@ class User{
     }
 
 /***************************** VERIFY TOW FACTOR AUTHENTICATION FUNCTION ********************************************/
-    async verify_email_twofactor(req,res){
-        try {
-            const{email,otp}=req.body
-            if(!(email && otp)){
-                return res.redirect('/verifyusingemail')
-            }
-            const existuser = await usermodel.findOne({email})
-            if(!(existuser)){
-                return res.redirect('/usersignup')
-            }
-            if(existuser.two_factor){
-                return res.render('/usersignin')
-            }
-            const emailverification=await emailverifymodel.findOne({ userId: existuser._id, otp })
-            if (!emailverification) {
-                // If no matching OTP and user is not verified, resend OTP
-                if (!existuser.is_verified) {
-                    await sendEmailVerificationOTP(req, existuser);
-                    return res.redirect('/verifyusingemail');
-                }
-                return res.redirect('/verifyusingemail');
-            }
-            const currentTime = new Date();
-        const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); // 15 minutes
-
-        if (currentTime > expirationTime) {
-            // OTP expired, send new OTP
-            await sendEmailVerificationOTP(req, existuser);
-            return res.redirect('/verifyusingemail');
-        }
-        
-        // OTP is valid and not expired, mark the email as verified
-        existuser.two_factor = true;
-        await existuser.save();
-
-        // Delete email verification document
-        await emailverifymodel.deleteMany({ userId: existuser._id });
-
-        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
-        } catch (error) {
-            console.log(error);      
-        }
-    }
 
 
 /***************** USER REGISTER FUNCTION***************/
@@ -324,10 +281,10 @@ class User{
                     password:newpassword
                 }
             })
-            sendupdatepasswordmessage(req,user)
-            return res.redirect('/usersignin')
+            const sendupdate=await sendEmail.SendUpdatePasswordMessage(req,res,user)
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
         }else{
-            res.redirect('/usersignup')
+            res.redirect('https://ecomwebskitters.onrender.com/usersignup')
         }
 
     } catch (error) {
@@ -459,18 +416,18 @@ async ForgotPasskey(req,res){
     try {
         const{email}=req.body
         if(!email){
-            return res.redirect('/forgotpassword')
+            return res.redirect('https://ecomwebskitters.onrender.com/forgotpassword')
         }
         const exisituser=await usermodel.findOne({email})
         if(!exisituser){
-            return res.redirect('/usersignin')
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
         }
         if(!exisituser.role=="admin"){
-            return res.redirect('/usersignin')
+            return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
         }
         const secret=exisituser._id+process.env.USER_SECRET_KEY;
         const token=jwt.sign({userID:exisituser._id},secret,{expiresIn:'5m'})
-        const resetLink=`http://localhost:9000/resetpassword/${exisituser._id}/${token}`;
+        const resetLink=`https://ecomwebskitters.onrender.com/${exisituser._id}/${token}`;
 
         await transporter.sendMail({
             from:process.env.EMAIL_FROM,
@@ -484,8 +441,8 @@ async ForgotPasskey(req,res){
             </p>
             <p>
               Alternatively, open the following URL in your browser:<br>
-              <a href="http://localhost:9000/resetpassword/${exisituser._id}/${token}">
-                http://localhost:9000/resetpassword/${exisituser._id}/${token}
+              <a href="https://ecomwebskitters.onrender.com/resetpassword/${exisituser._id}/${token}">
+                https://ecomwebskitters.onrender.com/resetpassword/${exisituser._id}/${token}
               </a>
             </p>
             <p>Thank you!</p>
@@ -493,7 +450,7 @@ async ForgotPasskey(req,res){
         })
         console.log("fogot password reset link send");
         
-        return res.redirect('/usersignin')
+        return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
     } catch (error) {
         console.log(error);
         
