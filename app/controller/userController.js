@@ -243,7 +243,7 @@ async Signin(req, res) {
         };
   
         const secretKey = user.role === 'admin' ? process.env.ADMIN_SECRET_KEY : process.env.USER_SECRET_KEY;
-        const tokenExpiry = user.role === 'admin' ? "45d" : "15d";
+        const tokenExpiry = user.role === 'admin' ? "45d" : "55d";
         const token = jwt.sign(tokenPayload, secretKey, { expiresIn: tokenExpiry });
   
         if (token) {
