@@ -237,6 +237,7 @@ async Signin(req, res) {
         const tokenPayload = {
           _id: user._id,
           email: user.email,
+          name:user.name,
           username: user.username,
           role: user.role,
           phonenumber: user.phonenumber || null

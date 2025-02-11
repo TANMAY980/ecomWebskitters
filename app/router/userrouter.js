@@ -1,6 +1,7 @@
 const express=require('express')
 const userController = require('../controller/userController')
 const User=require('../middleware/checkauth')
+const imageupload=require('../helper/imageupload')
 const router=express.Router()
 
 

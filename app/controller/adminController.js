@@ -352,7 +352,7 @@ class Admin{
                 categoryId, // Use the category ID
                 image: req.file ? req.file.path : null // Handle image upload
             });
-    
+   
             // Save the product to the database
             const product=await newProduct.save();
             if(product){
