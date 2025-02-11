@@ -109,6 +109,7 @@ class SendEmailAndSms{
     });
 
     console.log(`Email sent to ${email} successfully.`);
+    return true;
   } catch (error) {
     console.error("Error sending email:", error);
     return res.status(500).send("Internal Server Error");

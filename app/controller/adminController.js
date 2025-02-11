@@ -35,71 +35,71 @@ class Admin{
 
 
     /** ADMIN SIGNIN EJS PAGE RENDERING**/
-    async AdminSignIn(req,res){
-        try {
-            res.render('admin/adminSignIn',{
-                title:"admin login page",    
-            })
-        } catch (error) {
-            console.log(error);
-            res.status(500).send("Internal Server Error");
-        }
-    }
+    // async AdminSignIn(req,res){
+    //     try {
+    //         res.render('admin/adminSignIn',{
+    //             title:"admin login page",    
+    //         })
+    //     } catch (error) {
+    //         console.log(error);
+    //         res.status(500).send("Internal Server Error");
+    //     }
+    // }
 
     /********** ADMIN SIGNIN FUNCTION ************/
-    async AdminSignin(req,res){
-        try {
-            const {emailOrUsername,password}=req.body
-            if(!(emailOrUsername && password)){
-                return res.redirect('/admin/adminsignin')
-            }
-            console.log(emailOrUsername);
+    // async AdminSignin(req,res){
+    //     try {
+    //         const {emailOrUsername,password}=req.body
+    //         if(!(emailOrUsername && password)){
+    //             return res.redirect('/admin/adminsignin')
+    //         }
+    //         console.log(emailOrUsername);
             
-            const input = emailOrUsername.trim();
-            const existuser = await usermodel.findOne({
-                $or: [{ email: input },
-                     { username: input }]
-              });
-              if(!existuser){
-                return res.redirect('/admin/adminsignin')
+    //         const input = emailOrUsername.trim();
+    //         const existuser = await usermodel.findOne({
+    //             $or: [{ email: input },
+    //                  { username: input }]
+    //           });
+    //           if(!existuser){
+    //             return res.redirect('/admin/adminsignin')
                
-              }
-            console.log(existuser);
+    //           }
+    //         console.log(existuser);
               
-             if(!existuser.is_verified){
-                const otp= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
-                const sendmessage=await sendMessage(req,existuser,otp)
-                if(otp && sendmessage){
-                    return res.redirect('/admin/emailverify')
-                }
+    //          if(!existuser.is_verified){
+    //             const otp= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
+    //             const sendmessage=await sendMessage(req,existuser,otp)
+    //             if(otp && sendmessage){
+    //                 return res.redirect('/admin/emailverify')
+    //             }
                 
-             } 
+    //          } 
             
-            if(existuser && existuser.role=="admin"  && (await bcrypt.compare(password,existuser.password))){
-                const token=jwt.sign({
-                    _id:existuser._id,
-                    email:existuser.email,
-                    username:existuser.username,
-                    role:existuser.role,
-                    two_factor:existuser.two_factor
-                },process.env.ADMIN_SECRET_KEY,{expiresIn:"45d"})
-                console.log(token);
-                if(token){
-                    const url=`https://ecomwebskitters.onrender.com/admin/adminsignin`
-                    res.cookie("adminToken",token)
-                   const sendsigingmessage= await sendEmail.SendSiginingMessage(req,res,existuser,url)
-                    // sendLoginMessage(req,existuser)
-                    return res.redirect('/admin/admindashboard')
-                }else{
-                    return res.redirect('/admin/adminsignin')   
-                }  
-            }
-            return res.redirect('/admin/adminsignin')
-        } catch (error) {
-            console.log(error);  
-            res.status(500).send("Internal Server Error"); 
-        }
-    }
+    //         if(existuser && existuser.role=="admin"  && (await bcrypt.compare(password,existuser.password))){
+    //             const token=jwt.sign({
+    //                 _id:existuser._id,
+    //                 email:existuser.email,
+    //                 username:existuser.username,
+    //                 role:existuser.role,
+    //                 two_factor:existuser.two_factor
+    //             },process.env.ADMIN_SECRET_KEY,{expiresIn:"45d"})
+    //             console.log(token);
+    //             if(token){
+    //                 const url=`https://ecomwebskitters.onrender.com/admin/adminsignin`
+    //                 res.cookie("adminToken",token)
+    //                const sendsigingmessage= await sendEmail.SendSiginingMessage(req,res,existuser,url)
+    //                 // sendLoginMessage(req,existuser)
+    //                 return res.redirect('/admin/admindashboard')
+    //             }else{
+    //                 return res.redirect('/admin/adminsignin')   
+    //             }  
+    //         }
+    //         return res.redirect('/admin/adminsignin')
+    //     } catch (error) {
+    //         console.log(error);  
+    //         res.status(500).send("Internal Server Error"); 
+    //     }
+    // }
 
      /************************* VERIFY EMAIL EJS PAGE FUNCTION *****************************/
      async VerifyEmail(req,res){
@@ -463,7 +463,6 @@ class Admin{
         }
     }
 
-
     /********************* ALL ORDER EJS PAGE RENDERING FUNCTION**************************************/
     async AllorderProduct(req, res) {
         try {
@@ -473,7 +472,8 @@ class Admin{
             .populate("productId", "productName price")
             .populate("categoryId", "name")
             .populate("userId", "email");
-      
+            console.log(allorder);
+                
           const allcategory = await categorymodel.find();
       
           res.render("admin/allorderlist", {
@@ -485,7 +485,7 @@ class Admin{
           console.error("Error fetching order data:", error);
           res.status(500).send("Internal Server Error");
         }
-      }
+    }
       
 
      /************************************** CREATE ORDER API FUNCTION************************************************/
@@ -523,30 +523,20 @@ class Admin{
         try {
           const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
       
+          const filters = {
+            productName: { $regex: name.trim(), $options: "i" },
+            price: {
+              $gte: parseFloat(minPrice),
+              $lte: maxPrice !== "Infinity" ? parseFloat(maxPrice) : Number.MAX_VALUE,
+            },
+          };
+      
+          if (category) {
+            filters.categoryId = new mongoose.Types.ObjectId(category);
+          }
+      
           const allproduct = await productmodel.aggregate([
-            {
-              $addFields: {
-                priceCleaned: {
-                  $toDouble: {
-                    $replaceAll: {
-                      input: { $ifNull: ["$price", "0"] },
-                      find: ",",
-                      replacement: "",
-                    },
-                  },
-                },
-              },
-            },
-            {
-              $match: {
-                productName: { $regex: name.trim(), $options: "i" },
-                categoryId: category ? new mongoose.Types.ObjectId(category) : { $exists: true },
-                priceCleaned: {
-                  $gte: parseFloat(minPrice),
-                  $lte: parseFloat(maxPrice !== "Infinity" ? maxPrice : Number.MAX_VALUE),
-                },
-              },
-            },
+            { $match: filters },
             {
               $lookup: {
                 from: "categorymodels",
@@ -578,50 +568,53 @@ class Admin{
             data: allproduct,
             categorydata: allcategory,
           });
+      
         } catch (error) {
           console.error("Error fetching products:", error);
           res.status(500).send("Internal Server Error");
         }
-      }
+    }
+      
          
    /****************************** NOTIFY USER  FUNCTION **********************************/
    
    async Notify(req, res) {
     try {
-        const { orderId } = req.body;
-
-        if (!orderId) {
-            return res.status(400).send('Order ID is required');
-        }
-
-        // Fetch order and populate both product and user in one query
-        const order = await ordermodel
-            .findById(orderId)
-            .populate('userId')
-            .populate('productId');
-
-        if (!order) {
-            return res.status(404).send('Order not found');
-        }
-
-        const userEmail = order.userId?.email;
-        const productName = order.productId?.productName || 'N/A'; // Fallback if no product name
-
-        if (!userEmail) {
-            return res.status(400).send('User email not found');
-        }
-
-        const message = `Your order with ID ${orderId} for product "${productName}" is currently in "${order.order_stage}" stage.`;
-        const notification = await sendEmail.SendOrderStatus(req,res,userEmail, message);
-        if(notification){
-            return res.redirect('/admin/allorder');
-        }
-       
+      const { orderId } = req.body;
+      if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required' });
+      }
+  
+      const order = await ordermodel
+        .findById(orderId)
+        .populate('userId')
+        .populate('productId');
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      const userEmail = order.userId?.email;
+      const productName = order.productId?.productName || 'N/A';
+  
+      if (!userEmail) {
+        return res.status(400).json({ message: 'User email not found' });
+      }
+  
+      const message = `Your order with ID ${orderId} for product "${productName}" is currently in "${order.order_stage}" stage.`;
+      const notification = await sendEmail.SendOrderStatus(req, res, userEmail, message);
+  
+      if (notification) {
+        return res.status(200).json({ message: 'Notification sent successfully!' });
+      } else {
+        return res.status(500).json({ message: 'Failed to send notification!' });
+      }
     } catch (error) {
-        console.error('Error sending notification:', error);
-        res.status(500).json({ message: 'Failed to send notification' });
+      console.error('Error sending notification:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
-    }   
+  }
+    
 
       
     
@@ -673,7 +666,7 @@ class Admin{
     async Logout(req, res) {
         try { 
             res.clearCookie("adminToken");
-            res.redirect('/admin/adminsignin');
+            res.redirect('/usersignin');
         } catch (error) {
             console.log('Error during logout:', error);
             return res.status(500).send("Internal Server Error");

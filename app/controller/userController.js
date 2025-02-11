@@ -17,7 +17,7 @@ class User{
             console.log('after login',req.user);
             next()
         }else{
-            res.redirect('https://ecomwebskitters.onrender.com/usersignin')
+            res.redirect('/usersignin')
         }
     }
 
@@ -115,14 +115,14 @@ class User{
         try {
             const{email,otp}=req.body
             if(!(email && otp)){
-                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail')
+                return res.redirect('/verifyemail')
             }
             const existuser = await usermodel.findOne({email})
             if(!(existuser)){
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
+                return res.redirect('/usersignup')
             }
             if(existuser.is_verified){
-                return res.render('https://ecomwebskitters.onrender.com/usersignin')
+                return res.render('/usersignin')
             }
             const emailverification=await emailverifymodel.findOne({ userId: existuser._id, otp })
             if (!emailverification) {
@@ -130,9 +130,9 @@ class User{
                 if (!existuser.is_verified) {
                    const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
                    const sendOtp= await sendmessage.SendMessage(req,existuser)
-                    return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
+                    return res.redirect('/verifyemail');
                 }
-                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
+                return res.redirect('/verifyemail');
             }
             const currentTime = new Date();
         const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); // 15 minutes
@@ -140,7 +140,7 @@ class User{
         if (currentTime > expirationTime) {
             // OTP expired, send new OTP
            const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
-            return res.redirect('https://ecomwebskitters.onrender.com/verifyemail');
+            return res.redirect('/verifyemail');
         }
         
         // OTP is valid and not expired, mark the email as verified
@@ -150,7 +150,7 @@ class User{
         // Delete email verification document
         await emailverifymodel.deleteMany({ userId: existuser._id });
 
-        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
+        return res.redirect('/usersignin');
         } catch (error) {
             console.log(error);      
         }
@@ -166,14 +166,14 @@ class User{
             console.log(email,name,username,password,confirm_password,phonenumber);
             
             if(!(email && name && username && password  && confirm_password &&phonenumber)){
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
+                return res.redirect('/usersignup')
             }
             if(password !==confirm_password){
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
+                return res.redirect('/usersignup')
             }
             const existinguser= await usermodel.findOne({email})
             if(existinguser){
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
+                return res.redirect('/usersignin')
             }
             const formattedPhoneNumber = phonenumber.startsWith('+91') ? phonenumber : `+91${phonenumber}`;
             const user_password=password
@@ -186,7 +186,7 @@ class User{
             }
             const userdata=await usermodel.create(user)
             if(!userdata){
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignup')
+                return res.redirect('/usersignup')
             }
             const url=`https://ecomwebskitters.onrender.com/usersignin`
             const ecomwebskittersurl=`https://ecomwebskitters.onrender.com`
@@ -194,7 +194,7 @@ class User{
             const sendsms= await sendmessage.SendRegisterMessage(req,res,user)
             if(sendmail && sendsms){
                 console.log("mail and sms sent successfully");
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
+                return res.redirect('/usersignin');
             }         
 
         } catch (error) {
@@ -203,55 +203,72 @@ class User{
     }
 
 /****************USER SIGNIN FUNCTION**************/
-    async UserSignin(req,res){
+async Signin(req, res) {
     try {
-        const {emailOrUsername,password}=req.body
-        if(!(emailOrUsername && password)){
-            return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
+      const { emailOrUsername, password } = req.body;
+  
+      // Check for empty fields
+      if (!(emailOrUsername && password)) {
+        return res.redirect('/usersignin');
+      }
+  
+      const input = emailOrUsername.trim();
+      const user = await usermodel.findOne({
+        $or: [{ email: input }, { username: input }]
+      });
+  
+      // Check if user exists
+      if (!user) {
+        return res.redirect('/usersignup');
+      }
+  
+      // Check email verification
+      if (!user.is_verified) {
+        const otp = await sendEmail.SendEmailVerificationOTP(req, res, user);
+        const sendMessageStatus = await sendmessage.SendMessage(req, res, user, otp);
+        if (otp && sendMessageStatus) {
+          return res.redirect('/verifyemail');
         }
-        console.log(emailOrUsername);
-        const input = emailOrUsername.trim();
-        const existuser = await usermodel.findOne({
-            $or: [{ email: input }, { username: input }]
-          });
-          if(!existuser){
-            return res.redirect('https://ecomwebskitters.onrender.com/usersignup');
+        return res.redirect('/usersignup');
+      }
+  
+      // Verify role and password
+      if (await bcrypt.compare(password, user.password)) {
+        const tokenPayload = {
+          _id: user._id,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+          phonenumber: user.phonenumber || null
+        };
+  
+        const secretKey = user.role === 'admin' ? process.env.ADMIN_SECRET_KEY : process.env.USER_SECRET_KEY;
+        const tokenExpiry = user.role === 'admin' ? "45d" : "15d";
+        const token = jwt.sign(tokenPayload, secretKey, { expiresIn: tokenExpiry });
+  
+        if (token) {
+          const url = user.role === 'admin' ? '/admin/adminsignin' : '/usersignin';
+          res.cookie(user.role === 'admin' ? "adminToken" : "userToken", token);
+  
+          // Send login messages based on role
+          const loginEmail = await sendEmail.SendSiginingMessage(req, res, user, url);
+          if (user.role === 'user') {
+            await sendmessage.SendLoginMessage(req, res, user, url);
           }
-          if(!existuser.is_verified){
-            const otp= await sendEmail.SendEmailVerificationOTP(req,res,existuser)
-            const sendotpMessage = await sendmessage.SendMessage(req, res, existuser, otp);
-            if(otp && sendotpMessage){
-                return res.redirect('https://ecomwebskitters.onrender.com/verifyemail')
-            }
-            return res.redirect('https://ecomwebskitters.onrender.com/usersignup');
-          }
-          
-        if(existuser && existuser.role=="user" && (await bcrypt.compare(password,existuser.password))){
-            const token=jwt.sign({
-                _id:existuser._id,
-                email:existuser.email,
-                username:existuser.username,
-                phonenumber:existuser.phonenumber
-            },process.env.USER_SECRET_KEY,{expiresIn:"15d"})
-            console.log(token);
-            if(token){
-                const url=`https://ecomwebskitters.onrender.com/usersignin`
-                res.cookie("userToken",token)
-                const sendemail = await sendEmail.SendSiginingMessage(req,res,existuser,url)
-                const sendsms=await sendmessage.SendLoginMessage(req,res,existuser,url)
-                return res.redirect('https://ecomwebskitters.onrender.com/productpage')
-            }else{
-                return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
-            }
-           
+  
+          // Redirect to respective dashboard
+          return res.redirect(user.role === 'admin' ? '/admin/admindashboard' : '/productpage');
         }
-        return res.redirect('https://ecomwebskitters.onrender.com/usersignin');
+      }
+  
+      // Redirect back if login fails
+      return res.redirect('/usersignin');
     } catch (error) {
-        console.log(error);   
-        res.status(500).send("Internal Server Error");
+      console.log(error);
+      res.status(500).send("Internal Server Error");
     }
-    }
-
+  }
+  
 /******************** UPDATE PASSWORD EJS PAGE RENDERING FUNCTION**************************/
 
     async UpdatePassword(req,res){
@@ -329,31 +346,25 @@ async Product(req,res){
 async ProductSearch(req, res) {
     try {
       const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
-        
-      const allproduct = await productmodel.aggregate([
-        {
-          $addFields: {
-            priceCleaned: {
-              $toDouble: {
-                $replaceAll: {
-                  input: { $ifNull: ["$price", "0"] },
-                  find: ",",
-                  replacement: "",
+  
+      const filters = {
+        productName: { $regex: name.trim(), $options: "i" }, // Partial name search
+        ...(minPrice || maxPrice
+            ? {
+                price: {
+                  ...(minPrice ? { $gte: parseFloat(minPrice) } : {}),
+                  ...(maxPrice ? { $lte: parseFloat(maxPrice) } : {}),
                 },
-              },
-            },
-          },
-        },
-        {
-          $match: {
-            productName: { $regex: name.trim(), $options: "i" }, // Partial name search
-            categoryId: category ? new mongoose.Types.ObjectId(category) : { $exists: true },
-            priceCleaned: {
-              $gte: parseFloat(minPrice),
-              $lte: parseFloat(maxPrice !== "Infinity" ? maxPrice : Number.MAX_VALUE),
-            },
-          },
-        },
+              }
+            : {})
+      };
+  
+      if (category) {
+        filters.categoryId = new mongoose.Types.ObjectId(category);
+      }
+  
+      const allproduct = await productmodel.aggregate([
+        { $match: filters },
         {
           $lookup: {
             from: "categorymodels",
@@ -381,24 +392,26 @@ async ProductSearch(req, res) {
       ]);
   
       const allcategory = await categorymodel.find();
-      if(req.user){
+  
+      if (req.user) {
         res.render("product/product", {
-            data: allproduct,
-            categorydata: allcategory,
-            userdata: req.user,
-          });
-      }else{
-        res.render('user/home', {
-            data: allproduct,
-            categorydata: allcategory,
+          data: allproduct,
+          categorydata: allcategory,
+          userdata: req.user,
+        });
+      } else {
+        res.render("user/home", {
+          data: allproduct,
+          categorydata: allcategory,
         });
       }
-      
+  
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).send("Internal Server Error");
     }
   }
+  
   
 /*************** ADD TO CART EJS PAGE RENDERING FUNCTION*******************/
 async AddToCart(req,res){
@@ -417,14 +430,14 @@ async ForgotPasskey(req,res){
     try {
         const{email}=req.body
         if(!email){
-            return res.redirect('https://ecomwebskitters.onrender.com/forgotpassword')
+            return res.redirect('/forgotpassword')
         }
         const exisituser=await usermodel.findOne({email})
         if(!exisituser){
-            return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
+            return res.redirect('/usersignin')
         }
         if(!exisituser.role=="admin"){
-            return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
+            return res.redirect('/usersignin')
         }
         const secret=exisituser._id+process.env.USER_SECRET_KEY;
         const token=jwt.sign({userID:exisituser._id},secret,{expiresIn:'5m'})
@@ -443,15 +456,15 @@ async ForgotPasskey(req,res){
             <p>
               Alternatively, open the following URL in your browser:<br>
               <a href="https://ecomwebskitters.onrender.com/resetpassword/${exisituser._id}/${token}">
-                https://ecomwebskitters.onrender.com/resetpassword/${exisituser._id}/${token}
               </a>
+              https://ecomwebskitters.onrender.com/resetpassword/${exisituser._id}/${token}
             </p>
             <p>Thank you!</p>
           `,
         })
         console.log("fogot password reset link send");
         
-        return res.redirect('https://ecomwebskitters.onrender.com/usersignin')
+        return res.redirect('/usersignin')
     } catch (error) {
         console.log(error);
         

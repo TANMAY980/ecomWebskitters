@@ -4,7 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>All product</title>
+    <title>All Orderlist Page</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="/assets/vendors/feather/feather.css">
     <link rel="stylesheet" href="/assets/vendors/mdi/css/materialdesignicons.min.css">
@@ -23,6 +23,34 @@
     <link rel="stylesheet" href="/assets/css/style.css">
     <!-- endinject -->
     <link rel="shortcut icon" href="/assets/images/favicon.png" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+    </script>
+    <script>
+    
+    $(document).ready(function () {
+  $('#formd').submit(function (e) {
+    e.preventDefault();
+
+    const formData = $(this).serialize();
+
+    $.ajax({
+      type: 'POST',
+      url: '/admin/notification',
+      data: formData,
+      success: function (response) {
+        alert(response.message); // Show success notification
+      },
+      error: function (xhr) {
+        const errorMessage = xhr.responseJSON?.message || 'Failed to send notification!';
+        alert(errorMessage); // Show error notification
+      },
+    });
+  });
+});
+
+
+    </script>
+    
   </head>
   <body class="with-welcome-text">
     <div class="container-scroller">
@@ -140,15 +168,16 @@
                               <td><%= index + 1 %></td>
                               <td><%= order._id.toString().slice(6,-1) %></td>
                               <td><%= order.productId?.productName || "N/A" %></td>
-                              <td><%= order.productId?.price || "N/A" %></td>
+                              <td><%= order.productId?.price.toLocaleString('en-IN') || "N/A" %></td>
                               <td><%= order.categoryId?.name || "N/A" %></td>
                               <td><%= order.userId?.email || "N/A" %></td>
                               <td>
                                 <%= order.order_stage %>
-                                <form action="/admin/notification" method="POST">
-                                  <input type="hidden" name="orderId" value="<%= order._id %>">
-                                  <button type="submit" class="btn btn-info btn-sm">Notify</button>
-                                </form>
+                                <form id="formd" method="POST">
+  <input type="hidden" name="orderId" value="<%= order._id %>">
+  <button type="submit" id="send" class="btn btn-info btn-sm">Notify</button>
+</form>
+
                               </td>
                             </tr>
                           <% }) %>

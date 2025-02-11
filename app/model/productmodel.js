@@ -8,7 +8,7 @@ const productSchema=new Schema({
         lowercase:true,
     },
     price:{
-        type:String,
+        type:Number,
         required:true,
         minlength:1
     },

@@ -37,7 +37,7 @@ router.get('/',userController.Home)
 router.post('/signupuser',userController.UserRegister)
 
 /*********** USER LOGIN FUNCTION  ROUTER*****/
-router.post('/userlogin',userController.UserSignin)
+router.post('/userlogin',userController.Signin)
 
 /*************** LOGOUT USER EJS***************/
 router.get('/userlogout',userController.Logout)

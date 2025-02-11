@@ -6,10 +6,10 @@ const router=express.Router()
 
 
 /**** ADMIN SIGNIN ROUTER TO RENDER ADMIN LOGIN EJS PAGE******/
-router.get('/adminsignin',adminController.AdminSignIn)
+// router.get('/adminsignin',adminController.AdminSignIn)
 
 /****************ADMIN SIGN IN ROUTER FOR SIGNIN FUNCTION**********************/
-router.post('/adminSignin',adminController.AdminSignin)
+// router.post('/adminSignin',adminController.AdminSignin)
 
 /**** ADMIN DASHBOARD ROUTER TO RENDER ADMIN DASHBOARD EJS PAGE******/
 router.get('/admindashboard',Admin.AdminAuth,adminController.AdminCheck,adminController.AdminDashboard)

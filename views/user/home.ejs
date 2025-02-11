@@ -81,9 +81,6 @@
             <li>
               <a class="dropdown-item btn btn-primary text-white mb-1" href="/usersignin"><i class="mdi mdi-login text-white me-2"></i>Login</a>
             </li>
-            <li>
-              <a class="dropdown-item btn btn-secondary text-white" href="/admin/adminsignin"><i class="mdi mdi-account-key text-white me-2"></i>Admin Login</a>
-            </li>
           </ul>
         </li>
         
@@ -174,7 +171,7 @@
               <div class="card-body">
                 <h2 class="card-title text-center"><%= product.productName.slice(0,30) %></h2>
                 <p class="card-text text-center">desc: <%= product.description.slice(0,50) %></p>
-                <h3 class="text-center">₹<%= product.price %></h3>
+                <h3 class="text-center">₹<%= product.price.toLocaleString('en-IN') %></h3>
                 <button type="submit" class="btn btn-warning mt-3 d-block mx-auto">Add to Cart</button>
               </div>
             </div>
