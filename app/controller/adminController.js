@@ -8,7 +8,6 @@ const emailotpmodel=require('../model/verifyEmailmodel')
 const Fs=require('fs')
 const Path=require('path')
 const sendEmail=require('../helper/sendEmail')
-const{sendMessage,sendLoginMessage}=require('../helper/sendSms')
 const jwt=require('jsonwebtoken')
 const bcrypt=require('bcryptjs')
 
@@ -19,22 +18,24 @@ class Admin{
 
 
     /*************CHEKING ADMINUSER *******************/
-    async AdminCheck(req,res,next){
-        try {
-            if(req.admin){
-                console.log('after login',req.admin);
-                next()
-            }else{
-                res.redirect('/admin/adminsignin')
-            }
-        } catch (error) {
-            console.log(error);
-            res.status(500).send("Internal Server Error");
-        }  
-    }
+
+    // async AdminCheck(req,res,next){
+    //     try {
+    //         if(req.admin){
+    //             console.log('after login',req.admin);
+    //             next()
+    //         }else{
+    //             res.redirect('/admin/adminsignin')
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //         res.status(500).send("Internal Server Error");
+    //     }  
+    // }
 
 
     /** ADMIN SIGNIN EJS PAGE RENDERING**/
+
     // async AdminSignIn(req,res){
     //     try {
     //         res.render('admin/adminSignIn',{
@@ -47,6 +48,7 @@ class Admin{
     // }
 
     /********** ADMIN SIGNIN FUNCTION ************/
+
     // async AdminSignin(req,res){
     //     try {
     //         const {emailOrUsername,password}=req.body
@@ -102,6 +104,7 @@ class Admin{
     // }
 
      /************************* VERIFY EMAIL EJS PAGE FUNCTION *****************************/
+
      async VerifyEmail(req,res){
         try {
             res.render('admin/emailverify',{
@@ -114,6 +117,7 @@ class Admin{
     }
 
     /***************** VERIFY EMAIL FUNCTION ***************/
+
     async EmailVerify(req,res){
         try {
             const{email,otp}=req.body
@@ -165,52 +169,44 @@ class Admin{
     }
    
 
-    /** ADMIN DASHBOARD EJS PAGE RENDERING FUNCTION**/
-    async AdminDashboard(req,res){
+    /***************** ADMIN DASHBOARD EJS PAGE RENDERING FUNCTION *********************************/
+
+    async AdminDashboard(req, res) {
         try {
-            const categorydata=await categorymodel.countDocuments()
-            const productdata=await productmodel.countDocuments()
-            const userdata=await usermodel.countDocuments()
-            res.render('admin/adminDashboard',{
-                title:"admin Dashboard page",  
-                categorydata:categorydata,
-                productCount: productdata,
-                userCount:userdata,
-                data:req.admin
+            if (req.user && req.user.role === 'admin') {
+                const categorydata = await categorymodel.countDocuments();
+                const productdata = await productmodel.countDocuments();
+                const userdata = await usermodel.countDocuments();
+    
+                res.render('admin/adminDashboard', {
+                    title: "Admin Dashboard",
+                    categorydata: categorydata,
+                    productCount: productdata,
+                    userCount: userdata,
+                    data: req.user 
+                });
+                console.log('Admin Data in Dashboard:', req.user);
+            } else {
                 
-            })
-            console.log('Admin Data in Dashboard:', req.admin);
+                return res.redirect('/usersignin');
+            }
         } catch (error) {
             console.log(error);
-            
+            res.status(500).send("Internal Server Error");
         }
     }
-
-    /******** CREATE PRODUCT EJS PAGE RENDERING********/
-    async CreateProduct(req,res){
-        try {
-            const category=await categorymodel.find()
-            res.render('admin/createProduct',{
-                title:"create product page",
-                data:category,
-                userdata:req.admin
-            })
-        } catch (error) {
-            console.log(error);
-            
-        }
-    }
-
-
+    
     /****************** ALL CATEGORY EJS PAGE RENDERING*****************/
+
     async AllCategory(req,res){
         try {
             const alldata=await categorymodel.find()
-            res.render('admin/allcategory',{
-                title:"all category page",
-                data:alldata,
-                userdata:req.admin
+                res.render('admin/allcategory',{
+                    title:"all category page",
+                    data:alldata,
+                    userdata:req.user
             })
+            
         } catch (error) {
             console.log(error);
             
@@ -218,11 +214,12 @@ class Admin{
     }
 
     /****************** CREATE CATEGORY EJS PAGE RENDERING*****************************/
+
     async CreateCategory(req,res){
         try {
             res.render('admin/createcategory',{
                 title:"create category",
-                userdata:req.admin
+                userdata:req.user
             })
         } catch (error) {
             console.log(error);
@@ -231,6 +228,7 @@ class Admin{
     }
 
     /************************** CREATE CATEGORY FUNCTION**************************/
+
     async CreateCategories(req,res){
         try {
             const {name}=req.body
@@ -254,7 +252,9 @@ class Admin{
             
         }
     }
-/*********************** ALL USERS EJS PAGE*****************************/
+
+    /*********************** ALL USERS EJS PAGE*****************************/
+
     async AllUsers(req,res){
     try {
         const userdata=await usermodel.find({ role: { $ne: "admin" } })
@@ -270,7 +270,8 @@ class Admin{
     }
     }
 
-/**************************** DELETE USERS FUNCTION**********************************/
+    /**************************** DELETE USERS FUNCTION**********************************/
+
     async DeleteUser(req,res){
     try {
         const id= req.params.id
@@ -286,6 +287,7 @@ class Admin{
         
     }
     }
+
     /**********************DELETE CATEGORY FUNCTION *********************/
 
     async DeleteCategory(req,res){
@@ -302,6 +304,7 @@ class Admin{
     }
 
     /*********************UPDATE CATEGORY  EJS PAGE RENDERING FUNCTION*************************/
+
     async UpdateCategory(req,res){
         try {
             const id=req.params.id
@@ -314,7 +317,9 @@ class Admin{
             
         }
     }
+
     /**************************UPDATE CATEGORY FUNCTION****************************/
+
     async UpdateCategories(req,res){
         try {
             const id=req.params.id
@@ -334,39 +339,9 @@ class Admin{
             
         }
     }
-    /************************** CREATE PRODUCT FUNCTION *************************/
-
-    async CreateProducts(req,res){
-        try {
-            const { productName, price, stock, description, categoryId } = req.body;
-            console.log(productName, price, stock, description, categoryId );
-            
-            if(!(productName && price && stock && description && categoryId)){
-                return res.redirect('/admin/createproduct')
-            }
-            const newProduct = new productmodel({
-                productName,
-                price,
-                stock,
-                description,
-                categoryId, // Use the category ID
-                image: req.file ? req.file.path : null // Handle image upload
-            });
    
-            // Save the product to the database
-            const product=await newProduct.save();
-            if(product){
-                return res.redirect('/admin/allproducts')
-            }else{
-                return res.redirect('/admin/createproduct')
-            }
-            
-    } catch (error) {
-        console.log(error);       
-    }
-
-}
     /************************ ALL PRODUCT EJS PAGE RENDERING****************************/
+
     async AllProduct(req, res) {
         try {
             const allcategory = await categorymodel.find();
@@ -388,7 +363,7 @@ class Admin{
             res.render('admin/allproducts', {
                 data: productsWithCategoryNames,
                 categorydata: allcategory,
-                userdata: req.admin || null // This will pass 'userdata' only if it's defined
+                userdata: req.user || null // This will pass 'userdata' only if it's defined
             });
         } catch (error) {
             console.log(error);
@@ -396,8 +371,56 @@ class Admin{
         }
     }
     
+   /******************** CREATE PRODUCT EJS PAGE RENDERING ******************/
+
+    async CreateProduct(req,res){
+        try {
+            const category=await categorymodel.find()
+            res.render('admin/createProduct',{
+                title:"create product page",
+                data:category,
+                userdata:req.user
+            })
+        } catch (error) {
+            console.log(error);
+            
+        }
+    }
+
+    /************************** CREATE PRODUCT FUNCTION *************************/
+
+    async CreateProducts(req,res){
+        try {
+            const { productName, price, stock, description, categoryId } = req.body;
+            console.log(productName, price, stock, description, categoryId );
+            
+            if(!(productName && price && stock && description && categoryId)){
+                return res.redirect('/admin/createproduct')
+            }
+            const newProduct = new productmodel({
+                productName,
+                price,
+                stock,
+                description,
+                categoryId, 
+                image: req.file ? req.file.path : null 
+            });
+
+            const product=await newProduct.save();
+            if(product){
+                return res.redirect('/admin/allproducts')
+            }else{
+                return res.redirect('/admin/createproduct')
+            }
+            
+    } catch (error) {
+        console.log(error);       
+    }
+
+    }
 
     /**************************** UPDATE PRODUCT EJS PAGE RENDERING************************************/
+
     async UpdateProduct(req,res){
         try {
             const id=req.params.id
@@ -413,6 +436,7 @@ class Admin{
     }
 
     /**********************************UPDATE PRODUCT FUNTION ROUTER**********************/
+
     async UpdateProducts(req, res) {
         try {
             const id = req.params.id;
@@ -435,6 +459,7 @@ class Admin{
     }
 
     /************************ DELETE PRODUCT FUNCTION ******************************/
+
     async DeleteProduct(req,res){
         try {
             const id=req.params.id
@@ -464,9 +489,9 @@ class Admin{
     }
 
     /********************* ALL ORDER EJS PAGE RENDERING FUNCTION**************************************/
+
     async AllorderProduct(req, res) {
         try {
-          // Fetch all orders and populate related product, category, and user data
           const allorder = await ordermodel
             .find()
             .populate("productId", "productName price")
@@ -487,8 +512,8 @@ class Admin{
         }
     }
       
-
      /************************************** CREATE ORDER API FUNCTION************************************************/
+
    async CreateOrders(req,res){
     try {
         const{order_stage,productId,categoryId,userId}=req.body
@@ -517,18 +542,23 @@ class Admin{
     }
    }
 
-
+   
     /***************************** SEARCH PRODUCT FUNCTION****************************************************/
+
     async SearchProduct(req, res) {
         try {
           const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
       
           const filters = {
-            productName: { $regex: name.trim(), $options: "i" },
-            price: {
-              $gte: parseFloat(minPrice),
-              $lte: maxPrice !== "Infinity" ? parseFloat(maxPrice) : Number.MAX_VALUE,
-            },
+            productName: { $regex: name.trim(), $options: "i" }, 
+            ...(minPrice || maxPrice
+                ? {
+                    price: {
+                      ...(minPrice ? { $gte: parseFloat(minPrice) } : {}),
+                      ...(maxPrice ? { $lte: parseFloat(maxPrice) } : {}),
+                    },
+                  }
+                : {})
           };
       
           if (category) {
@@ -578,54 +608,66 @@ class Admin{
          
    /****************************** NOTIFY USER  FUNCTION **********************************/
    
-   async Notify(req, res) {
-    try {
-      const { orderId } = req.body;
-      if (!orderId) {
-        return res.status(400).json({ message: 'Order ID is required' });
-      }
-  
-      const order = await ordermodel
-        .findById(orderId)
-        .populate('userId')
-        .populate('productId');
-  
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      const userEmail = order.userId?.email;
-      const productName = order.productId?.productName || 'N/A';
-  
-      if (!userEmail) {
-        return res.status(400).json({ message: 'User email not found' });
-      }
-  
-      const message = `Your order with ID ${orderId} for product "${productName}" is currently in "${order.order_stage}" stage.`;
-      const notification = await sendEmail.SendOrderStatus(req, res, userEmail, message);
-  
-      if (notification) {
-        return res.status(200).json({ message: 'Notification sent successfully!' });
-      } else {
-        return res.status(500).json({ message: 'Failed to send notification!' });
-      }
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
+    async Notify(req, res) {
+        try {
+        const { orderId } = req.body;
+        if (!orderId) {
+            return res.status(400).json({ message: 'Order ID is required' });
+        }
     
+        const order = await ordermodel
+            .findById(orderId)
+            .populate('userId')
+            .populate('productId');
+    
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+    
+        const userEmail = order.userId?.email;
+        const productName = order.productId?.productName || 'N/A';
+    
+        if (!userEmail) {
+            return res.status(400).json({ message: 'User email not found' });
+        }
+    
+        const message = `Your order with ID ${orderId} for product "${productName}" is currently in "${order.order_stage}" stage.`;
+        const notification = await sendEmail.SendOrderStatus(req, res, userEmail, message);
+    
+        if (notification) {
+            return res.status(200).json({ message: 'Notification sent successfully!' });
+        } else {
+            return res.status(500).json({ message: 'Failed to send notification!' });
+        }
+        } catch (error) {
+        console.error('Error sending notification:', error);
+        res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+    
+    /*******************ALERT EJS PAGE RENDERING FUNCTION FOR RESET PASSWORD **********************/
 
+    async AlertPage(req,res){
+        try {
+            res.render('admin/alert',{
+                title:"alert page"
+            })
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send("Internal Server Error");  
+        }
+        
+    }
       
     
 /*************************************************PASSWORD FUNCTIONALITY*********************************************************************/    
 
-    /********************************** UPDATE PASSWORD EJS PAGE RENDERING***********************************/
-    
+
+    /********************************** UPDATE PASSWORD EJS PAGE RENDERING***********************************/ 
     async UpdatePassword(req,res){
         try {
             res.render('admin/updatepassword',{
-                data:req.admin,
+                data:req.user,
                 title:"update password page"
             })
         } catch (error) {
@@ -633,6 +675,7 @@ class Admin{
             return res.status(500).send("Internal Server Error");
         }
     }
+
     /*********************************UPDATE PASSWORD FUNCTION ROUTER**********************************/
     async UpdatePasswords(req,res){
         try{
@@ -649,10 +692,12 @@ class Admin{
                         password:newpassword
                     }
                 })
-                res.clearCookie("adminToken")
-                return res.redirect('/admin/adminsignin')
+                const sendupdate=await sendEmail.SendUpdatePasswordMessage(req,res,user)
+                 if(sendupdate){
+                    return res.redirect('/usersignin')
+                }
             }else{
-                res.redirect('/register')
+               return res.redirect('/usersignin')
             }
     
 
@@ -662,18 +707,6 @@ class Admin{
         }
     }
 
-    /*************************** LOGOUT USER FUNCTION**********************************/
-    async Logout(req, res) {
-        try { 
-            res.clearCookie("adminToken");
-            res.redirect('/usersignin');
-        } catch (error) {
-            console.log('Error during logout:', error);
-            return res.status(500).send("Internal Server Error");
-        }
-    }
-    
-    
     /******************** FORGOT PASSWORD EJS PAGE RENDERING FUNCTION*************************/
     async Forgot_Password(req,res){
         try {
@@ -687,20 +720,7 @@ class Admin{
         }
     }
 
-/*******************ALERT EJS PAGE RENDERING FUNCTION**********************/
-    async AlertPage(req,res){
-        try {
-            res.render('admin/alert',{
-                title:"alert page"
-            })
-        } catch (error) {
-            console.log(error);
-            return res.status(500).send("Internal Server Error");  
-        }
-        
-    }
-
-    /**************FORGOT PASSWORD FUNCTION ***************/
+    /***************************** FORGOT PASSWORD FUNCTION ***************/
     async ForgotPassword(req,res){
         try {
             const {email}=req.body;
@@ -735,7 +755,7 @@ class Admin{
         }
     }
 
-    /************************RESET PASSWORD EJS PAGE RENDERING************************/
+    /************************ RESET PASSWORD EJS PAGE RENDERING ************************/
     async Reset(req,res){
         try {
             const { id, token } = req.params;
@@ -748,7 +768,7 @@ class Admin{
         }
     }
 
-    /************************RESET PASSWORD FUNCTION********************************/
+    /************************ RESET PASSWORD FUNCTION ********************************/
     async ResetPassword(req,res){
         try {
             const {id,token}=req.params;
@@ -785,7 +805,24 @@ class Admin{
         }
     }
 
-    
+
+
+/****************************************** LOGOUT USER FUNCTION ************************************************************/
+    async Logout(req, res) {
+        try { 
+            req.logout((err) => {
+                if (err) {
+                    console.log('Error during logout:', err);
+                    return res.status(500).send("Internal Server Error");
+                }
+                res.redirect('/usersignin');
+            });
+        } catch (error) {
+            console.log('Error during logout:', error);
+            return res.status(500).send("Internal Server Error");
+        }
+    }
+
 
 }
 module.exports= new Admin()

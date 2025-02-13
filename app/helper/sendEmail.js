@@ -69,6 +69,7 @@ class SendEmailAndSms{
             from here anytime ${url} </p>`
               
           })
+          return true
     } catch (error) {
       console.log(error);
       return res.status(500).send("Internal Server Error");
@@ -77,7 +78,7 @@ class SendEmailAndSms{
   
 /**************************************SEND UPDATE PASSWORD MESSAGE***************************************************/
 
-    async SendUpdatePasswordMessage(req,res,user){
+  async SendUpdatePasswordMessage(req,res,user){
   try {
     const sendupdatemessage=await transporter.sendMail({
       from:process.env.EMAIL_FROM,
@@ -86,6 +87,7 @@ class SendEmailAndSms{
       html: `<p>Dear${user.name},welcome to Ecommerce</p>
       <p>dear user ${user.email } password updated successfully please signin your account again in your account.</p>`
     })
+    return true
   } catch (error) {
     console.log(error);
     return res.status(500).send("Internal Server Error");

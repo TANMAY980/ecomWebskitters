@@ -6,6 +6,9 @@ const DB=require('./app/config/dbConfig')
 const bodyParser = require('body-parser')
 const cookieparser=require('cookie-parser')
 const session=require('express-session')
+const passport=require('passport')
+const passportAuth =require('./app/config/passportConfig')
+
 
 
 
@@ -17,12 +20,26 @@ DB()
 
 app.use(session({
     cookie: {
-        maxAge: 60000
+        maxAge: 2400000
     },
     secret: process.env.COKKIE_PARSER_SECRET_KEY,
     resave: false,
     saveUninitialized: false
 }));
+// Middleware to refresh session expiry on activity
+app.use((req, res, next) => {
+    if (req.session) {
+
+        req.session.touch(); 
+    }
+    next();
+});
+
+passportAuth.PassportLocalStrategy()
+passportAuth.PassportSerialize();
+passportAuth.PassportDeSerialize();
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(cookieparser());
 
@@ -44,6 +61,7 @@ app.use('/admin',adminroute)
 
 const userroute=require('./app/router/userrouter')
 app.use(userroute)
+
 
 const port=process.env.PORT||9000
 

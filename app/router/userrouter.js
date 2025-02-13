@@ -1,9 +1,10 @@
 const express=require('express')
 const userController = require('../controller/userController')
-const User=require('../middleware/checkauth')
-const imageupload=require('../helper/imageupload')
-const router=express.Router()
 
+const passportmiddleware=require('../middleware/passportMiddleware')
+
+const router=express.Router()
+const passport=require('passport')
 
 /**** USER SIGNUP ROUTER TO RENDER USER SIGNUP EJS PAGE******/
 router.get('/usersignup',userController.UserSignUp)
@@ -19,7 +20,8 @@ router.get('/forgotpassword',userController.ForgotPassword)
 router.post('/forgotPassword',userController.ForgotPasskey)
 
 /********** PRODUCT PAGE ROUTER TO RENDER PRODUCT EJS PAGE ***********/
-router.get('/productpage',User.UserAuth,userController.Product)
+router.get('/productpage', passport.authenticate('session', { failureRedirect: '/usersignin' }), userController.Product);
+
 
 router.get('/searchproduct',userController.ProductSearch)
 
@@ -38,23 +40,33 @@ router.get('/',userController.Home)
 router.post('/signupuser',userController.UserRegister)
 
 /*********** USER LOGIN FUNCTION  ROUTER*****/
-router.post('/userlogin',userController.Signin)
+router.post('/userlogin',passportmiddleware.AuthenticateUser,userController.Signin)
 
 /*************** LOGOUT USER EJS***************/
 router.get('/userlogout',userController.Logout)
 
-/********************** UPDATE USER PASSWORD EJS PAGE ROUTER ************************/
-router.get('/updatepass/:id',User.UserAuth,userController.UserCheck,userController.UpdatePassword)
+/********************** UPDATE USER PASSWORD EJS PAGE ROUTER(JWT) ************************/
 
-/*************** UPDATE USER PASSWORD FUNCTION****************/
-router.post('/updatepasskey/:id',User.UserAuth,userController.UpdatePasskey)
+// router.get('/updatepass/:id',User.UserAuth,userController.UserCheck,userController.UpdatePassword)
 
+/********************** UPDATE USER PASSWORD EJS PAGE ROUTER (PASSPORT) ************************/
+
+router.get('/updatepass/:id',passportmiddleware.IsUser,userController.UpdatePassword)
+
+/*************** UPDATE USER PASSWORD FUNCTION ROUTER (JWT) ****************/
+// router.post('/updatepasskey/:id',User.UserAuth,userController.UpdatePasskey)
+
+/*************** UPDATE USER PASSWORD FUNCTION ROUTER (PASSPORT) ****************/
+router.post('/updatepasskey/:id',passportmiddleware.IsUser,userController.UpdatePasskey)
+
+/************************* RESET PASSWORD EJS PAGE RENDERING FUNCTION ROUTER **************************************/
 router.get('/resetpassword/:id/:token',userController.Reset)
 
+/******************************* RESET PASSWORD FUNCTION ROUTER*********************************************/
 router.post('/resetPassword/:id/:token',userController.ResetPasskey)
 
 /****************** CART EJS PAGE ROUTER ***************/
-router.get('/addcart',userController.AddToCart)
+router.get('/addcart',passportmiddleware.IsUser,userController.AddToCart)
 
 
 
