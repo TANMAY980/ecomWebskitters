@@ -117,7 +117,7 @@ class User{
 /****************** USER SIGININ FUNCTION USING PASSPORT ************************/
 async Signin(req,res){
     try {
-        const user = req.user; // User is added to the request by Passport
+        const user = req.user; 
         console.log("Logged in user:", user);
             
             if (!user.is_verified) {

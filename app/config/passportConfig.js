@@ -41,7 +41,7 @@ class PassportAuth {
 
     async PassportSerialize() {
         passport.serializeUser((user, done) => {
-            done(null, user._id); // Serialize the user's ID (or any unique identifier)
+            done(null, user._id); 
         });
     }
 

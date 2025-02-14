@@ -16,7 +16,7 @@ const PassportMiddleware=require('../middleware/passportMiddleware')
 /**** ADMIN DASHBOARD ROUTER TO RENDER ADMIN DASHBOARD EJS PAGE******/
 //router.get('/admindashboard',Admin.AdminAuth,adminController.AdminCheck,adminController.AdminDashboard)
 
-router.get('/admindashboard',passport.authenticate('session', { failureRedirect: '/usersignin' }),adminController.AdminDashboard)
+router.get('/admindashboard',PassportMiddleware.IsAdmin,adminController.AdminDashboard)
 
 
 /**** CREATE PRODUCT PAGE ROUTER TO RENDER CREATE PRODUCT EJS PAGE (JWT)******/

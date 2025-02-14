@@ -20,7 +20,7 @@ router.get('/forgotpassword',userController.ForgotPassword)
 router.post('/forgotPassword',userController.ForgotPasskey)
 
 /********** PRODUCT PAGE ROUTER TO RENDER PRODUCT EJS PAGE ***********/
-router.get('/productpage', passport.authenticate('session', { failureRedirect: '/usersignin' }), userController.Product);
+router.get('/productpage', passportmiddleware.IsUser, userController.Product);
 
 
 router.get('/searchproduct',userController.ProductSearch)
@@ -40,7 +40,7 @@ router.get('/',userController.Home)
 router.post('/signupuser',userController.UserRegister)
 
 /*********** USER LOGIN FUNCTION  ROUTER*****/
-router.post('/userlogin',passportmiddleware.AuthenticateUser,userController.Signin)
+router.post('/userlogin',passport.authenticate('local'),userController.Signin)
 
 /*************** LOGOUT USER EJS***************/
 router.get('/userlogout',userController.Logout)
