@@ -685,7 +685,7 @@ async Logout(req,res){
             if (err) {
                 return res.status(500).send("Error during logout");
             }
-            res.redirect('/'); t
+            res.redirect('/');
         });
     }catch(error){
         console.log(error);   
