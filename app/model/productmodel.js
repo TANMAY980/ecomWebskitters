@@ -38,6 +38,10 @@ const productSchema=new Schema({
         enum: ["Available", "Out of Stock"],
         default: "Available",
       },
+    ratings:{
+        type:String,
+        enum:["1","2","3","4","5"],
+    }
 },{
     timestamps:true,
     versionKey:false,

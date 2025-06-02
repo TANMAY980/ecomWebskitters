@@ -136,7 +136,6 @@ class Admin{
 
 
             if (!emailverification) {
-                // If no matching OTP and user is not verified, resend OTP
                 if (!existuser.is_verified) {
                    const emailverification = await sendEmail.SendEmailVerificationOTP(req,res,existuser);
                    if(emailverification){
@@ -146,19 +145,16 @@ class Admin{
                 return res.redirect('/admin/emailverify')
             }
             const currentTime = new Date();
-        const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); // 15 minutes
+        const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); 
 
         if (currentTime > expirationTime) {
-            // OTP expired, send new OTP
             const sendotp=await sendEmail.SendEmailVerificationOTP(req,res,existuser);
             return res.redirect('/admin/emailverify');
         }
 
-        // OTP is valid and not expired, mark the email as verified
         existuser.two_factor = true;
         await existuser.save();
 
-        // Delete email verification document
         await emailotpmodel.deleteMany({ userId: existuser._id });
 
         return res.redirect('/admin/adminsignin');
@@ -347,23 +343,20 @@ class Admin{
             const allcategory = await categorymodel.find();
             const allproduct = await productmodel.find();
     
-            // Map categories by ID for easy lookup
             const categoryMap = allcategory.reduce((map, category) => {
-                map[category._id] = category.name; // Store category name using category ID as key
+                map[category._id] = category.name; 
                 return map;
             }, {});
     
-            // Pass category name instead of ID
             const productsWithCategoryNames = allproduct.map(product => ({
                 ...product.toObject(),
-                categoryName: categoryMap[product.categoryId] || 'Unknown Category' // Add category name to each product
+                categoryName: categoryMap[product.categoryId] || 'Unknown Category' 
             }));
     
-            // Pass 'userdata' only if req.user exists, otherwise pass null
             res.render('admin/allproducts', {
                 data: productsWithCategoryNames,
                 categorydata: allcategory,
-                userdata: req.user || null // This will pass 'userdata' only if it's defined
+                userdata: req.user || null 
             });
         } catch (error) {
             console.log(error);

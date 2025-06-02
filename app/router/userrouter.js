@@ -67,6 +67,10 @@ router.post('/resetPassword/:id/:token',userController.ResetPasskey)
 
 /****************** CART EJS PAGE ROUTER ***************/
 router.get('/addcart',passportmiddleware.IsUser,userController.AddToCart)
+router.post('/addtocart',passportmiddleware.IsUser,userController.AddInCart)
+router.get('/editaddress/:id',passportmiddleware.IsUser,userController.EditAddress)
+router.post('/updateaddress/:id',passportmiddleware.IsUser,userController.UpdateAddress)
+router.post('/remove',userController.RemoveItem)
 
 
 

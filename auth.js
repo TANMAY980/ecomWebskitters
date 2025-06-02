@@ -20,17 +20,15 @@ DB()
 
 app.use(session({
     cookie: {
-        maxAge: 2400000
+        maxAge:  30* 60 * 1000 ,
     },
     secret: process.env.COKKIE_PARSER_SECRET_KEY,
     resave: false,
     saveUninitialized: false
 }));
-// Middleware to refresh session expiry on activity
 app.use((req, res, next) => {
     if (req.session) {
 
-        req.session.touch(); 
     }
     next();
 });

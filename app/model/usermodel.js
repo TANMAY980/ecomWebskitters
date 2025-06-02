@@ -38,12 +38,23 @@ const userSchema=new Schema({
     },
     is_verified:{
         type:Boolean,
-        default:false
+        default:false,
+        default:""
     },
     phonenumber:{
         type:String,
-        required:true
+        required:true,
+        default:""
     },
+    address:{
+        type:String,
+        required:true,
+        default:""
+    },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    }
 },{
     timestamps:true,
     versionKey:false

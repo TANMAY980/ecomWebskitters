@@ -4,6 +4,7 @@ const usermodel=require('../model/usermodel')
 const productmodel=require('../model/productmodel')
 const categorymodel=require('../model/categorymodel')
 const emailverifymodel=require('../model/verifyEmailmodel')
+const cartmodel=require('../model/cartmodel')
 const sendEmail=require('../helper/sendEmail')
 const sendmessage=require('../helper/sendSms')
 const bcrypt=require('bcryptjs')
@@ -117,9 +118,7 @@ class User{
 /****************** USER SIGININ FUNCTION USING PASSPORT ************************/
 async Signin(req,res){
     try {
-        const user = req.user; 
-        console.log("Logged in user:", user);
-            
+        const user = req.user;    
             if (!user.is_verified) {
                 const otp = await sendEmail.SendEmailVerificationOTP(req, res, user);
                 await sendmessage.SendMessage(req, res, user, otp);
@@ -129,16 +128,11 @@ async Signin(req,res){
             if (user.role === 'admin') {
                 const url="https://ecomwebskitters.onrender.com/usersignin"
                 const loginEmail = await sendEmail.SendSiginingMessage(req, res, user, url);
-                if(loginEmail){
-                    console.log("successfully login mail send");    
-                }
+                const loginmessage=await sendmessage.SendLoginMessage(req,res,user)
                 return res.redirect('/admin/admindashboard');
             }
             const url="https://ecomwebskitters.onrender.com/usersignin"
             const loginEmail = await sendEmail.SendSiginingMessage(req, res, user, url);
-            if(loginEmail){
-                console.log("successfully login mail send");    
-            }
             return res.redirect('/productpage');
     } catch (error) {
         console.log(error);
@@ -163,27 +157,31 @@ async Signin(req,res){
     async Home(req,res){
         try {
             const allcategory = await categorymodel.find();
-            const allproduct = await productmodel.find();
+            const page = parseInt(req.query.page) || 1;
+            const limit = 12;
+            const skip = (page - 1) * limit;
+            const totalProducts = await productmodel.countDocuments();
+            const allproduct = await productmodel.find().skip(skip).limit(limit);
     
-            // Map categories by ID for easy lookup
             const categoryMap = allcategory.reduce((map, category) => {
-                map[category._id] = category.name; // Store category name using category ID as key
+                map[category._id] = category.name; 
                 return map;
             }, {});
     
-            // Pass category name instead of ID
             const productsWithCategoryNames = allproduct.map(product => ({
                 ...product.toObject(),
-                categoryName: categoryMap[product.categoryId] || 'Unknown Category' // Add category name to each product
+                categoryName: categoryMap[product.categoryId] || 'Unknown Category' 
             }));
     
-            // Pass 'userdata' only if req.user exists, otherwise pass null
             res.render('user/home', {
                 data: productsWithCategoryNames,
                 categorydata: allcategory,
+                currentPage: page,
+                totalPages: Math.ceil(totalProducts / limit)
             });
         } catch (error) {
-
+            console.log(error);
+            
         }    
     }
 
@@ -224,7 +222,6 @@ async Signin(req,res){
             }
             const emailverification=await emailverifymodel.findOne({ userId: existuser._id, otp })
             if (!emailverification) {
-                // If no matching OTP and user is not verified, resend OTP
                 if (!existuser.is_verified) {
                    const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
                    const sendOtp= await sendmessage.SendMessage(req,existuser)
@@ -233,19 +230,15 @@ async Signin(req,res){
                 return res.redirect('/verifyemail');
             }
             const currentTime = new Date();
-        const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000); // 15 minutes
+        const expirationTime = new Date(emailverification.createdAt.getTime() + 15 * 60 * 1000);
 
         if (currentTime > expirationTime) {
-            // OTP expired, send new OTP
            const sendotp= await sendEmail.SendEmailVerificationOTP(req,res,existuser);
             return res.redirect('/verifyemail');
         }
-        
-        // OTP is valid and not expired, mark the email as verified
         existuser.is_verified = true;
         await existuser.save();
 
-        // Delete email verification document
         await emailverifymodel.deleteMany({ userId: existuser._id });
 
         return res.redirect('/usersignin');
@@ -261,8 +254,6 @@ async Signin(req,res){
     async UserRegister(req,res){
         try {
             const{email,name,username,password,confirm_password,phonenumber}=req.body
-            console.log(email,name,username,password,confirm_password,phonenumber);
-            
             if(!(email && name && username && password  && confirm_password &&phonenumber)){
                 return res.redirect('/usersignup')
             }
@@ -348,38 +339,84 @@ async Signin(req,res){
 
 /******* PRODUCT EJS PAGE RENDERING****************/
 
-async Product(req,res){
-    try {
-        const allcategory = await categorymodel.find();
-        const allproduct = await productmodel.find();
+// async Product(req,res){
+//     try {
+//         const allcategory = await categorymodel.find();
+//         const allproduct = await productmodel.find();
 
-        const categoryMap = allcategory.reduce((map, category) => {
-            map[category._id] = category.name; // Store category name using category ID as key
-            return map;
-        }, {});
+//         const categoryMap = allcategory.reduce((map, category) => {
+//             map[category._id] = category.name;
+//             return map;
+//         }, {});
+//         const productsWithCategoryNames = allproduct.map(product => ({
+//             ...product.toObject(),
+//             categoryName: categoryMap[product.categoryId] || 'Unknown Category'
+//         }));
+//         let cartCount = 0;
+//         if (req.user) {
+//           const cart = await cartmodel.findOne({ user: req.user._id });
+//           cartCount = cart ? cart.items.length : 0;
+//         }
+//         res.render('product/product', {
+//             data: productsWithCategoryNames,
+//             categorydata: allcategory,
+//             userdata: req.user || null ,
+//             cartCount
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).send('Error fetching data');
+//     }
+// }
+async Product(req, res) {
+  try {
+    const allcategory = await categorymodel.find();
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12;
+    const skip = (page - 1) * limit;
+    const totalProducts = await productmodel.countDocuments();
+    const allproduct = await productmodel.find().skip(skip).limit(limit);
+    const categoryMap = allcategory.reduce((map, category) => {
+      map[category._id] = category.name;
+      return map;
+    }, {});
 
-        // Pass category name instead of ID
-        const productsWithCategoryNames = allproduct.map(product => ({
-            ...product.toObject(),
-            categoryName: categoryMap[product.categoryId] || 'Unknown Category' // Add category name to each product
-        }));
+    const productsWithCategoryNames = allproduct.map(product => ({
+      ...product.toObject(),
+      categoryName: categoryMap[product.categoryId] || 'Unknown Category'
+    }));
 
-        res.render('product/product', {
-            data: productsWithCategoryNames,
-            categorydata: allcategory,
-            userdata: req.user || null 
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).send('Error fetching data');
-    }
+    let cartCount = 0;
+    if (req.user) {
+      const cart = await cartmodel.findOne({ user: req.user._id });
+      cartCount = cart ? cart.items.length : 0;
+    }  
+    res.render('product/product', {
+      data: productsWithCategoryNames,
+      categorydata: allcategory,
+      userdata: req.user || null,
+      cartCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalProducts / limit)
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('Error fetching data');
+  }
 }
+
 
 /*********************** PRODUCT SEARCH APPLYING WITH THE HELP OF CATEGORY NAME PRICE****************************************/
 
 async ProductSearch(req, res) {
     try {
-      const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+        const totalProducts = await productmodel.countDocuments();
+        const allproducts = await productmodel.find().skip(skip).limit(limit);
+        const { name = "", category, minPrice = "0", maxPrice = "Infinity" } = req.query;
   
       const filters = {
         productName: { $regex: name.trim(), $options: "i" }, 
@@ -427,20 +464,29 @@ async ProductSearch(req, res) {
   
       const allcategory = await categorymodel.find();
       const userData=req.user
-      
+      let cartCount = 0;
+    if (req.user) {
+          const cart = await cartmodel.findOne({ user: req.user._id });
+          cartCount = cart ? cart.items.length : 0;
+        }
   
       if (userData) {
         res.render("product/product", {
           data: allproduct,
           categorydata: allcategory,
-          userdata: req.user
+          userdata: req.user,
+          currentPage:page,
+          cartCount,
+          totalPages: Math.ceil(totalProducts / limit)
                  
         });
         
       } else {
         res.render("user/home", {
           data: allproduct,
+          currentPage:page,
           categorydata: allcategory,
+          totalPages: Math.ceil(totalProducts / limit)
         });
       }
   
@@ -449,20 +495,98 @@ async ProductSearch(req, res) {
       res.status(500).send("Internal Server Error");
     }
   }
-  
-  
-/*************** ADD TO CART EJS PAGE RENDERING FUNCTION*******************/
-async AddToCart(req,res){
-    try {
-        res.render('user/addcart')
-    } catch (error) {
-        console.log(error);
-        res.status(500).send("Internal Server Error");
-        
-    }
+
+/*************** ADD TO CART EJS PAGE RENDERING FUNCTION *******************/
+async AddToCart(req, res) {
+  try {
+    const userId = req.user._id;
+    const userdata=req.user
+    const cart = await cartmodel
+      .findOne({ user: userId })
+      .populate('items.product')
+      .lean();
+    let cartCount = 0;
+    if (cart && cart.items) {
+      cartCount = cart.items.length;
+    }   
+    res.render('user/addcart', { cart: cart || { items: [] },cartCount,userdata });
+  } catch (error) {
+    console.log("Error in AddToCart:", error);
+    res.status(500).send("Internal Server Error");
+  }
 }
 
 
+async AddInCart(req,res){
+    try {
+        const userId=req.user._id
+        const productId = req.body.productId;
+        let cart = await cartmodel.findOne({ user: userId });
+        if (!cart) {
+      cart = new cartmodel({
+        user: userId,
+        items: [{ product: productId, quantity: 1 }]
+      });
+    } else {
+      const existingItemIndex = cart.items.findIndex(
+        item => item.product.toString() === productId
+      );
+          if (existingItemIndex !== -1) {
+        cart.items[existingItemIndex].quantity += 1;
+      } else {
+        cart.items.push({ product: productId, quantity: 1 });
+      }
+    }
+
+    await cart.save();
+    res.redirect('/productpage'); 
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async RemoveItem(req,res){
+    try {
+        const userid=req.user
+        const id=req.body.productId
+        const data=await cartmodel.updateOne({user : userid},{$pull:{items:{product:id}}})
+        if(data){
+            return res.redirect('/addcart')
+        }else{
+            return res.redirect('/addcart')
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async EditAddress(req,res){
+    try {
+        const userid=req.params.id
+       return res.render('user/editaddress',{
+        userdata:req.user,
+        userid
+       }) 
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
+async UpdateAddress(req,res){
+    try {
+        const userid=req.params.id
+        const address=req.body.address
+        const useraddress=await usermodel.findByIdAndUpdate(userid,{address})
+        if(useraddress){
+            return res.redirect('/addcart')
+        }else{
+            return res.redirect('/product')
+        }
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
 /******************************** FOROGOT PASSWORD FUNCTION**********************************************/
 async ForgotPasskey(req,res){
     try {
@@ -521,8 +645,6 @@ async Reset(req,res){
     }
 }
 
-
-
 /************************** RESET PASSWORD FUNCTION *******************************/
 async ResetPasskey(req,res){
     const {id,token}=req.params;
@@ -563,7 +685,7 @@ async Logout(req,res){
             if (err) {
                 return res.status(500).send("Error during logout");
             }
-            res.redirect('/');  // Redirect to the login page after logout
+            res.redirect('/'); t
         });
     }catch(error){
         console.log(error);   

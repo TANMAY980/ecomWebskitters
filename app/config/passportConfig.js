@@ -12,7 +12,6 @@ class PassportAuth {
             async (emailOrUsername, password, done) => {
                 try {
                     const input = emailOrUsername.trim();
-                    console.log(input);
                     
                     const user = await usermodel.findOne({
                         $or: [{ email: input }, { username: input }],
@@ -20,7 +19,6 @@ class PassportAuth {
                     if (!user) {
                         return done(null, false, { message: "User not found" });
                     }
-                    console.log(user);
                     
                     if (!user.is_verified) {
                         return done(null, false, { message: "User not verified", unverifiedUser: user });

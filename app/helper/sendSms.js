@@ -33,7 +33,6 @@ class Twilio{
                 from: process.env.TWILIO_NUMBER,
                 to:user.phonenumber
             })
-            console.log(message);
         } catch (error) {
             console.log(error);
             
