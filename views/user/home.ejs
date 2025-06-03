@@ -39,24 +39,25 @@
 
     <nav
       class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-center justify-content-between flex-row"
-      style="background-color:#edf1f2">
-      <!-- Left: Brand & Toggle -->
-      <div class="navbar-brand-wrapper d-flex align-items-center ps-3">
+      style="background-color:#5f79eb">
+      <div class="navbar-brand-wrapper d-flex align-items-center ps-3"style="background-color:#5f79eb">
         <button class="navbar-toggler me-3" type="button" data-bs-toggle="minimize">
           <span class="icon-menu"></span>
         </button>
-        <a class="navbar-brand brand-logo me-2" href="/">
+        <a class="navbar-brand brand-logo" href="/">
           <img src="../assets/images/logo.svg" alt="logo" />
         </a>
         <a class="navbar-brand brand-logo-mini d-lg-none" href="/">
           <img src="../assets/images/logo-mini.svg" alt="logo-mini" />
         </a>
       </div>
-
-      <!-- Center: Welcome + Search Form -->
       <div class="d-flex align-items-center flex-grow-1 justify-content-center gap-3 px-3 flex-wrap">
-        <h5 class="mb-0 fw-semibold d-none d-xl-block">Welcome to Ecommerce</h5>
+        <a class="navbar-brand brand-logo me-2" href="/">
+          <h3 class="mb-0 fw-semibold d-none d-xl-block"style="color:rgba(231, 235, 32, 0.87)">Ecom</h3>
+        </a>
         <form action="/searchproduct" method="GET" class="d-flex align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center flex-wrap gap-2 p-2"
+        style="border: 1px solid rgba(231, 235, 32, 0.87); border-radius: 8px;">
           <input type="text" name="name" class="form-control form-control-sm" placeholder="Name"
             style="width: 150px;" />
           <select name="category" class="form-control form-control-sm" style="width: 150px;">
@@ -81,7 +82,7 @@
       <div class="d-flex align-items-center gap-3 pe-3">
         <li class="me-2 list-unstyled position-relative">
           <a href="/addcart" class="text-decoration-none">
-            <i class="mdi mdi-cart-outline" style="font-size: 32px; color: blue;"></i>
+            <i class="mdi mdi-cart-outline" style="font-size: 32px; color: rgba(231, 235, 32, 0.87);"></i>
           </a>
         </li>
         <li class="nav-item d-none d-lg-block">
@@ -93,7 +94,7 @@
           </div>
         </li>
         <div class="dropdown">
-          <button class="btn btn-outline-primary btn-sm dropdown-toggle" id="UserDropdown" type="button"
+          <button class="btn btn-warning btn-sm dropdown-toggle"  id="UserDropdown" type="button"
             data-bs-toggle="dropdown">
             Hello, Sign In
           </button>
@@ -165,6 +166,30 @@
                       <p>Traditional styles with a modern twist</p>
                     </div>
                   </div>
+                  <div class="carousel-item">
+                    <img src="/assets/images/carousel8.png" class="d-block w-100" alt="Banner 5"
+                      style="height: 200px; object-fit: cover;">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Festive Collection</h5>
+                      <p>Traditional styles with a modern twist</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="/assets/images/carousel9.png" class="d-block w-100" alt="Banner 5"
+                      style="height: 200px; object-fit: cover;">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Festive Collection</h5>
+                      <p>Traditional styles with a modern twist</p>
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="/assets/images/carousel10.png" class="d-block w-100" alt="Banner 5"
+                      style="height: 200px; object-fit: cover;">
+                    <div class="carousel-caption d-none d-md-block">
+                      <h5>Festive Collection</h5>
+                      <p>Traditional styles with a modern twist</p>
+                    </div>
+                  </div>
                 </div>
 
                 <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel"
@@ -184,6 +209,7 @@
             </div>
 
             <div class="container">
+              <h4>Up to 50% off | Electronics & accessories from stores near you</h4>
               <% if (data && data.length> 0) { %>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
                   <% data.forEach((product, index)=> { %>
@@ -204,7 +230,7 @@
                               <input type="hidden" name="productId" value="<%= product._id %>">
                               <button type="submit" class="btn btn-warning">Add To Cart</button>
                             </form>
-                            <button type="button" class="btn btn-primary">Buy now</button>
+                            <button type="button" class="btn" style="background-color: #5f79eb; color: white;">Buy now</button>
                           </div>
                         </div>
                       </div>
@@ -214,6 +240,7 @@
                 </div>
                 <div class="row my-4">
                   <div class="col-12">
+                    <h4>Best Sellers in Clothing & Accessories</h4>
                     <div id="carousel-<%= index %>" class="carousel slide" data-bs-ride="carousel">
                       <div class="carousel-inner rounded">
                         <div class="carousel-item active">
