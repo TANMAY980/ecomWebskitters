@@ -70,9 +70,10 @@ router.get('/addcart',passportmiddleware.IsUser,userController.AddToCart)
 router.post('/addtocart',passportmiddleware.IsUser,userController.AddInCart)
 router.get('/editaddress/:id',passportmiddleware.IsUser,userController.EditAddress)
 router.post('/updateaddress/:id',passportmiddleware.IsUser,userController.UpdateAddress)
-router.post('/remove',userController.RemoveItem)
-
-
+router.get('/userDetails/:id',passportmiddleware.IsUser,userController.UserDetails)
+router.post('/remove',passportmiddleware.IsUser,userController.RemoveItem)
+router.get('/product/:id',userController.ProductPage)
+router.post('/buynow',passportmiddleware.IsUser,userController.BuyNow)
 
 
 

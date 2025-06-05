@@ -172,12 +172,13 @@ async Signin(req,res){
                 ...product.toObject(),
                 categoryName: categoryMap[product.categoryId] || 'Unknown Category' 
             }));
-    
+            let cartCount=0
             res.render('user/home', {
                 data: productsWithCategoryNames,
                 categorydata: allcategory,
                 currentPage: page,
-                totalPages: Math.ceil(totalProducts / limit)
+                totalPages: Math.ceil(totalProducts / limit),
+                cartCount
             });
         } catch (error) {
             console.log(error);
@@ -292,7 +293,55 @@ async Signin(req,res){
     }
 
 
-  
+async UserDetails(req,res){
+    try {
+    let cartCount = 0;
+    if (req.user) {
+      const cart = await cartmodel.findOne({ user: req.user._id });
+      cartCount = cart ? cart.items.length : 0;
+    } 
+        res.render('user/userDetails',{
+            userdata:req.user,
+            cartCount
+        })
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
+
+async ProductPage(req,res){
+    try {
+        const allcategory = await categorymodel.find();
+        const productId=req.params.id
+        const product = await productmodel.findById(productId)
+        let cartCount = 0;
+        if (req.user) {
+        const cart = await cartmodel.findOne({ user: req.user._id });
+        cartCount = cart ? cart.items.length : 0;
+        }
+        const userdata=req.user || null
+        if(userdata){
+            res.render('user/productPage',{
+            data: product,
+            cartCount,
+            categorydata: allcategory,
+            userdata
+        })
+        }else{
+            res.render('user/productPage',{
+            data: product,
+            cartCount,
+            categorydata: allcategory,
+            userdata
+        })
+        } 
+        
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
 /******************** UPDATE PASSWORD EJS PAGE RENDERING FUNCTION**************************/
 
     async UpdatePassword(req,res){
@@ -509,7 +558,10 @@ async AddToCart(req, res) {
     if (cart && cart.items) {
       cartCount = cart.items.length;
     }   
-    res.render('user/addcart', { cart: cart || { items: [] },cartCount,userdata });
+    res.render('user/addcart', { 
+        cart: cart || { items: [] },
+        cartCount,
+        userdata });
   } catch (error) {
     console.log("Error in AddToCart:", error);
     res.status(500).send("Internal Server Error");
@@ -540,6 +592,33 @@ async AddInCart(req,res){
 
     await cart.save();
     res.redirect('/productpage'); 
+    } catch (error) {
+        console.log(error);
+    }
+}
+async BuyNow(req,res){
+    try {
+        const userId=req.user._id
+        const productId = req.body.productId;
+        let cart = await cartmodel.findOne({ user: userId });
+        if (!cart) {
+      cart = new cartmodel({
+        user: userId,
+        items: [{ product: productId, quantity: 1 }]
+      });
+    } else {
+      const existingItemIndex = cart.items.findIndex(
+        item => item.product.toString() === productId
+      );
+          if (existingItemIndex !== -1) {
+        cart.items[existingItemIndex].quantity += 1;
+      } else {
+        cart.items.push({ product: productId, quantity: 1 });
+      }
+    }
+
+    await cart.save();
+    return res.redirect('/addcart'); 
     } catch (error) {
         console.log(error);
     }
