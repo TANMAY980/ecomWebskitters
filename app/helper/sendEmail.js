@@ -95,7 +95,7 @@ class SendEmailAndSms{
     }
 
 /***************************************SEND STATUS ORDER********************************************************/
-    async SendOrderStatus(req,res,email,message){
+  async SendOrderStatus(req,res,email,message){
   try {
     const loginUrl = "https://ecomwebskitters.onrender.com/usersignin"; 
     const ecommerce="https://ecomwebskitters.onrender.com"
@@ -117,7 +117,27 @@ class SendEmailAndSms{
     return res.status(500).send("Internal Server Error");
   }
     }
-
+  
+  async SendOrderNotification(req,res,email,message){
+  try {
+    const loginUrl = "https://ecomwebskitters.onrender.com/usersignin"; 
+    const ecommerce="https://ecomwebskitters.onrender.com"
+    const sendstatus=await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: "Order Notification",
+      html: `
+        <p>Dear user : ${email} your order is successfully placed</p>
+        <p>Your order's current status is: <strong>ordered</strong>.</p>
+        <p>You can log in to your account <a href="${loginUrl}">here</a> for more details.</p>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return res.status(500).send("Internal Server Error");
+  }
+    }
 
 }
 

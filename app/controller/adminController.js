@@ -181,7 +181,6 @@ class Admin{
                     userCount: userdata,
                     data: req.user 
                 });
-                console.log('Admin Data in Dashboard:', req.user);
             } else {
                 
                 return res.redirect('/usersignin');
@@ -482,16 +481,13 @@ class Admin{
     }
 
     /********************* ALL ORDER EJS PAGE RENDERING FUNCTION**************************************/
-
     async AllorderProduct(req, res) {
         try {
           const allorder = await ordermodel
             .find()
-            .populate("productId", "productName price")
-            .populate("categoryId", "name")
+            .populate("items.productId", "productName price")
+            .populate("items.categoryId", "name")
             .populate("userId", "email");
-            console.log(allorder);
-                
           const allcategory = await categorymodel.find();
       
           res.render("admin/allorderlist", {

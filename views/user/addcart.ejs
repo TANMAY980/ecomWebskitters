@@ -66,6 +66,12 @@
   </style>
 </head>
 <body>
+  <% if (success_msg) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= success_msg %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
   <nav class="navbar default-layout col-lg-12 col-12 p-0 fixed-top d-flex align-items-top flex-row" style="background-color:#5f79eb !important;">
   <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-start">
     <div class="me-3">
@@ -185,7 +191,9 @@
         <p class="fw-bold">Delivery Charge: ₹10</p>
         <hr>
         <p class="fw-bold">Total Amount: ₹<%= totalPrice %></p>
-        <button class="btn btn-primary w-100 mt-3">Pay</button>
+        <form action="/order" method="post">
+            <button type="submit" class="btn btn-primary w-100 mt-3">Buy Now</button>
+        </form>
       </div>
     </div>
   </div>

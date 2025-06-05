@@ -74,6 +74,7 @@ router.get('/userDetails/:id',passportmiddleware.IsUser,userController.UserDetai
 router.post('/remove',passportmiddleware.IsUser,userController.RemoveItem)
 router.get('/product/:id',userController.ProductPage)
 router.post('/buynow',passportmiddleware.IsUser,userController.BuyNow)
+router.post('/order',passportmiddleware.IsUser,userController.bynow)
 
 
 

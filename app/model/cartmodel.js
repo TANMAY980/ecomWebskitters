@@ -5,8 +5,9 @@ const CartSchema=new Schema({
     user:{type:Schema.Types.ObjectId,ref:"usermodel"},
     items:[{
         product:{type:Schema.Types.ObjectId,ref:"productModel"},
-        quantity:{type:Number,default:1}
+        quantity:{type:Number,default:1},
     }],
+    total:{type:Number,default:0}
     
 })
 const cartmodel=mongoose.model("cart",CartSchema)

@@ -8,6 +8,7 @@ const cookieparser=require('cookie-parser')
 const session=require('express-session')
 const passport=require('passport')
 const passportAuth =require('./app/config/passportConfig')
+const flash =require('connect-flash')
 
 
 
@@ -26,11 +27,12 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
-app.use((req, res, next) => {
-    if (req.session) {
 
-    }
-    next();
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  next();
 });
 
 passportAuth.PassportLocalStrategy()
