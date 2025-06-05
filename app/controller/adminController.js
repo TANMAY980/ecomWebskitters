@@ -361,8 +361,7 @@ class Admin{
             console.log(error);
             res.status(500).send('Error fetching data');
         }
-    }
-    
+    }    
    /******************** CREATE PRODUCT EJS PAGE RENDERING ******************/
 
     async CreateProduct(req,res){
