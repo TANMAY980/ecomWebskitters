@@ -182,7 +182,7 @@ class User {
         categorydata: allcategory,
         currentPage: page,
         totalPages: Math.ceil(totalProducts / limit),
-        cartCount,
+        cartCount:0,
       });
     } catch (error) {
       console.log(error);
@@ -569,6 +569,7 @@ class User {
           currentPage: page,
           categorydata: allcategory,
           totalPages: Math.ceil(totalProducts / limit),
+          cartCount:0
         });
       }
     } catch (error) {
